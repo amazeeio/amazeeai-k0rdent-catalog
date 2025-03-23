@@ -5,6 +5,6 @@ type: application
 version: 0.1.642
 appVersion: "0.1.642"
 dependencies:
-  - name: litellm
+  - name: litellm-helm
     version: 0.1.642
-    repository: ghcr.io/berriai/litellm-helm
+    repository: oci://ghcr.io/berriai
