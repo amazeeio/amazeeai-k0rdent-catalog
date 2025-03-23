@@ -1,0 +1,10 @@
+apiVersion: v2
+name: litellm-service-template
+description: k0rdent service template for "litellm"
+type: application
+version: 1.16.2
+appVersion: "1.16.2"
+dependencies:
+  - name: amazeeai-k0rdent-catalog
+    version: 1.0.0
+    repository: oci://ghcr.io/amazeeio/amazeeai-k0rdent-catalog/charts

@@ -1,0 +1,10 @@
+apiVersion: v2
+name: litellm
+description: A Helm chart to refer the official litellm helm chart
+type: application
+version: 0.1.642
+appVersion: "0.1.642"
+dependencies:
+  - name: litellm
+    version: 0.1.642
+    repository: ghcr.io/berriai/litellm-helm

@@ -1,0 +1,48 @@
+litellm:
+  .aws_api_key: &aws-api-key
+    aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
+    aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
+    aws_region_name: os.environ/AWS_REGION
+
+
+  image:
+    repository: ghcr.io/amazeeio/litellm-database
+    tag: "main-latest"
+
+  envVars:
+      AWS_ACCESS_KEY_ID: "fillme"
+      AWS_SECRET_ACCESS_KEY: "fillme"
+      AWS_REGION: "fillme"
+      UI_USERNAME: admin
+      UI_PASSWORD: fillme
+  proxy_config:
+    model_list:
+
+      - model_name: claude-3-5-haiku
+        litellm_params: &claude-3-5-haiku
+          model: bedrock/anthropic.claude-3-haiku-20240307-v1:0
+          <<: *aws-api-key
+      - model_name: claude-3-5-sonnet
+        litellm_params: &claude-3-5-sonnet
+          model: bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0
+          <<: *aws-api-key
+      - model_name: titan-embed-text-v2:0
+        litellm_params: &titan-embed-text-v2
+          model: amazon.titan-embed-text-v2:0
+          <<: *aws-api-key
+
+      # Operation aliases - see AI module operation types.
+      - model_name: chat
+        litellm_params: *claude-3-5-haiku
+      - model_name: chat_with_complex_json
+        litellm_params: *claude-3-5-sonnet
+      - model_name: chat_with_image_vision
+        litellm_params: *claude-3-5-haiku
+      - model_name: embeddings
+        litellm_params: *titan-embed-text-v2
+
+
+    general_settings:
+      master_key: os.environ/PROXY_MASTER_KEY
+      store_model_in_db: true
+      store_prompts_in_spend_logs: true
