@@ -1,3 +1,5 @@
+host: litellm.example.com
+
 litellm:
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
