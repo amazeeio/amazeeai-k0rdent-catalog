@@ -1,6 +1,6 @@
 host: litellm.example.com
 
-litellm:
+litellm-helm:
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
