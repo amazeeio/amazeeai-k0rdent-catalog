@@ -1,6 +1,0 @@
-dependencies:
-- name: amazeeai-k0rdent-catalog
-  repository: oci://ghcr.io/amazeeio/amazeeai-k0rdent-catalog/charts
-  version: 1.0.0
-digest: sha256:7c54c6632a6f2008785eeb5b25f818b6686808a19562d51c69dc42a4c8d74b6d
-generated: "2025-03-22T23:18:01.451942-04:00"
