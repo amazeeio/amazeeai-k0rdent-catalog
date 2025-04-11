@@ -2,7 +2,7 @@ apiVersion: v2
 name: litellm
 description: A Helm chart to refer the official litellm helm chart
 type: application
-version: 0.1.642
+version: 0.2.1
 appVersion: "0.1.642"
 dependencies:
   - name: litellm-helm
