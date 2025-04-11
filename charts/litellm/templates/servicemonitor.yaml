@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: litellm
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: litellm-helm
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}

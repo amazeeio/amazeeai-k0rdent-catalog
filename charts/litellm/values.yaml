@@ -48,3 +48,18 @@ litellm-helm:
       master_key: os.environ/PROXY_MASTER_KEY
       store_model_in_db: true
       store_prompts_in_spend_logs: true
+
+
+prometheus:
+  server:
+    namespaces:
+      - {{ .Release.Namespace }}
+
+grafana:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/issuer: "letsencrypt-prod"
+    hosts:
+      - grafana.example.com
