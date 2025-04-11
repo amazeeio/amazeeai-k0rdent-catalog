@@ -53,7 +53,7 @@ litellm-helm:
 prometheus:
   server:
     namespaces:
-      - {{ .Release.Namespace }}
+      - litellm
 
 grafana:
   ingress:
