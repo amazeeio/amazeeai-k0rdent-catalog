@@ -4,6 +4,9 @@ kind: ServiceMonitor
 metadata:
   name: litellm
   namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "1"
   labels:
     release: prometheus
 spec:
