@@ -58,7 +58,7 @@ prometheus:
     enabled: false
   prometheus-pushgateway:
     enabled: false
-  extraScrapeConfigs:
+  extraScrapeConfigs: | 
     - job_name: 'litellm'
       static_configs:
         - targets: ['litellm:4000'] 
