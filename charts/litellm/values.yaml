@@ -1,8 +1,5 @@
 host: litellm.example.com
 
-serviceMonitor:
-  enabled: true 
-
 litellm-helm:
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
@@ -57,13 +54,15 @@ prometheus:
   server:
     namespaces:
       - litellm  # This will be the default namespace, can be overridden during helm install
-  nodeExporter:
+  prometheus-node-exporter:
     enabled: false
-  pushgateway:
+  prometheus-pushgateway:
     enabled: false
-  prometheusOperator:
-    enabled: true
-    createCustomResource: true
+  extraScrapeConfigs:
+    - job_name: 'litellm'
+      static_configs:
+        - targets: ['litellm:4000'] 
+
 
 
 grafana:
