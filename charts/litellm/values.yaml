@@ -43,6 +43,8 @@ litellm-helm:
       - model_name: embeddings
         litellm_params: *titan-embed-text-v2
 
+    litellm_settings:
+      callbacks: ["prometheus"]
 
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
