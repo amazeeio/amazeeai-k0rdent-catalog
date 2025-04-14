@@ -57,6 +57,10 @@ prometheus:
   server:
     namespaces:
       - litellm  # This will be the default namespace, can be overridden during helm install
+  nodeExporter:
+    enabled: false
+  pushgateway:
+    enabled: false
 
 
 grafana:
