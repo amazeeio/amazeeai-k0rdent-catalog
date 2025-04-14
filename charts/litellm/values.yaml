@@ -61,6 +61,9 @@ prometheus:
     enabled: false
   pushgateway:
     enabled: false
+  prometheusOperator:
+    enabled: true
+    createCustomResource: true
 
 
 grafana:
