@@ -9,7 +9,7 @@ litellm-helm:
 
   image:
     repository: ghcr.io/amazeeio/litellm-database
-    tag: "main-latest"
+    tag: "main"
 
   envVars:
       AWS_ACCESS_KEY_ID: "fillme"
