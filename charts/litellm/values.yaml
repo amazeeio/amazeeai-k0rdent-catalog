@@ -81,6 +81,7 @@ grafana:
     - hosts:
       - grafana.example.com
       secretName: grafana-tls
+      
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -91,3 +92,9 @@ grafana:
           access: proxy
           isDefault: true
           editable: false
+  persistence:
+    type: pvc
+    enabled: true
+    size: 1Gi
+  deploymentStrategy:
+    type: Recreate          
