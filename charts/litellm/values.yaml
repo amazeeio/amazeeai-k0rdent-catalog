@@ -140,7 +140,7 @@ lago:
   frontUrl: "https://{{ .Values.lago.ingress.frontHostname }}"
   # TODO use manged postgres and redis and disable here
   postgres:
-    enabled: false
+    enabled: true
   redis:
     enabled: true
   global:
@@ -160,7 +160,7 @@ postgresql:
   primary:
     persistence:
       enabled: true
-      size: 5Gi
+      size: 1Gi
     resources:
       requests:
         memory: 256Mi
