@@ -148,7 +148,7 @@ lago:
       enabled: false
     signup:
       enabled: false
-    databaseUrl: "postgresql://lago:fillme@lago-db-postgresql:5432/lago"
+
 
 postgresql:
   enabled: true
