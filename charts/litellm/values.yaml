@@ -120,7 +120,7 @@ grafana:
 
 
 lago:
-  enabled: true
+  enabled: false #default to false so it doesn't have to be overridden everywhere
   ingress:
     enabled: true
     annotations:
@@ -140,7 +140,7 @@ lago:
   frontUrl: "https://{{ .Values.lago.ingress.frontHostname }}"
   # TODO use manged postgres and redis and disable here
   postgres:
-    enabled: true
+    enabled: false
   redis:
     enabled: true
   global:
@@ -148,3 +148,25 @@ lago:
       enabled: false
     signup:
       enabled: false
+    databaseUrl: "postgresql://lago:fillme@lago-db-postgresql:5432/lago"
+
+lago-db:
+  enabled: false #default to false so it doesn't have to be overridden everywhere
+  name: lago-db
+  auth:
+    postgresPassword: "fillme"
+    database: lago
+    username: lago
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+  metrics:
+    enabled: false
