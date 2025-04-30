@@ -58,7 +58,7 @@ prometheus:
   server:
     global:
       external_labels:
-        cluster: example.com 
+        cluster: example.com
     namespaces:
       - litellm  # This will be the default namespace, can be overridden during helm install
     ingress:
@@ -74,16 +74,16 @@ prometheus:
       tls:
         - secretName: prometheus-tls
           hosts:
-            - prometheus.example.com      
+            - prometheus.example.com
   prometheus-node-exporter:
     enabled: false
   prometheus-pushgateway:
     enabled: false
-  extraScrapeConfigs: | 
+  extraScrapeConfigs: |
     - job_name: 'litellm'
       scrape_interval: 15s
       static_configs:
-        - targets: ['litellm:4000'] 
+        - targets: ['litellm:4000']
 
 
 
@@ -100,7 +100,7 @@ grafana:
     - hosts:
       - grafana.example.com
       secretName: grafana-tls
-      
+
   datasources:
     datasources.yaml:
       apiVersion: 1
@@ -116,4 +116,35 @@ grafana:
     enabled: true
     size: 1Gi
   deploymentStrategy:
-    type: Recreate          
+    type: Recreate
+
+
+lago:
+  enabled: true
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/issuer: "letsencrypt-prod"
+    className: nginx
+    apiHostname: lago-api.example.com
+    frontHostname: lago.example.com
+    hosts:
+    - "{{ .Values.lago.ingress.apiHostname }}"
+    - "{{ .Values.lago.ingress.frontHostname }}"
+    tls:
+    - hosts:
+      - "{{ .Values.lago.ingress.frontHostname }}"
+      - "{{ .Values.lago.ingress.apiHostname }}"
+      secretName: lago-tls
+  apiUrl: "https://{{ .Values.lago.ingress.apiHostname }}"
+  frontUrl: "https://{{ .Values.lago.ingress.frontHostname }}"
+  # TODO use manged postgres and redis and disable here
+  postgres:
+    enabled: true
+  redis:
+    enabled: true
+  global:
+    segment:
+      enabled: false
+    signup:
+      enabled: false
