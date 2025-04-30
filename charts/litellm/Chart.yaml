@@ -19,7 +19,7 @@ dependencies:
     version: 1.21.3
     repository: https://charts.getlago.com/
     condition: lago.enabled
-  - name: lago-db
+  - name: postgresql
     version: 16.6.6
     repository: https://charts.bitnami.com/bitnami
-    condition: lago-db.enabled
+    condition: postgresql.enabled

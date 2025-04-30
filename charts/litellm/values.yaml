@@ -150,7 +150,7 @@ lago:
       enabled: false
     databaseUrl: "postgresql://lago:fillme@lago-db-postgresql:5432/lago"
 
-lago-db:
+postgresql:
   enabled: false #default to false so it doesn't have to be overridden everywhere
   name: lago-db
   auth:
