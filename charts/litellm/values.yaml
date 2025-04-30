@@ -65,9 +65,9 @@ prometheus:
       enabled: false
       ingressClassName: nginx
       annotations:
+        cert-manager.io/issuer: "letsencrypt-prod"
         nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
-      paths:
-        - /federate
+      path: /federate
       pathType: Prefix
       hosts:
         - prometheus.example.com
