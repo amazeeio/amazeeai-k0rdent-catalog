@@ -120,7 +120,7 @@ grafana:
 
 
 lago:
-  enabled: false #default to false so it doesn't have to be overridden everywhere
+  enabled: true
   ingress:
     enabled: true
     annotations:
@@ -151,7 +151,7 @@ lago:
     databaseUrl: "postgresql://lago:fillme@lago-db-postgresql:5432/lago"
 
 postgresql:
-  enabled: false #default to false so it doesn't have to be overridden everywhere
+  enabled: true
   name: lago-db
   auth:
     postgresPassword: "fillme"
