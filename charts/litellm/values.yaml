@@ -36,11 +36,11 @@ litellm-helm:
 
       # Operation aliases - see AI module operation types.
       - model_name: chat
-        litellm_params: *claude-3-5-haiku
+        litellm_params: *claude-3-5-sonnet
       - model_name: chat_with_complex_json
         litellm_params: *claude-3-5-sonnet
       - model_name: chat_with_image_vision
-        litellm_params: *claude-3-5-haiku
+        litellm_params: *claude-3-5-sonnet
       - model_name: embeddings
         litellm_params: *titan-embed-text-v2
 
