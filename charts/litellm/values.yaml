@@ -139,34 +139,15 @@ lago:
   apiUrl: "https://{{ .Values.lago.ingress.apiHostname }}"
   frontUrl: "https://{{ .Values.lago.ingress.frontHostname }}"
   # TODO use manged postgres and redis and disable here
-  postgres:
+  postgresql:
     enabled: true
   redis:
     enabled: true
   global:
+    postgresql:
+      image:
+        tag: 16.6.6
     segment:
       enabled: false
     signup:
       enabled: false
-
-
-postgresql:
-  enabled: true
-  name: lago-db
-  auth:
-    postgresPassword: "fillme"
-    database: lago
-    username: lago
-  primary:
-    persistence:
-      enabled: true
-      size: 1Gi
-    resources:
-      requests:
-        memory: 256Mi
-        cpu: 250m
-      limits:
-        memory: 512Mi
-        cpu: 500m
-  metrics:
-    enabled: false

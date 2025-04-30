@@ -2,7 +2,7 @@ apiVersion: v2
 name: litellm
 description: A Helm chart to refer the official litellm helm chart
 type: application
-version: 0.3.9
+version: 0.3.10
 dependencies:
   - name: litellm-helm
     version: 0.1.642
@@ -19,7 +19,3 @@ dependencies:
     version: 1.21.3
     repository: https://charts.getlago.com/
     condition: lago.enabled
-  - name: postgresql
-    version: 16.6.6
-    repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
