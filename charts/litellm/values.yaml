@@ -1,6 +1,7 @@
 host: litellm.example.com
 
 litellm-helm:
+  enabled: true
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
@@ -57,6 +58,19 @@ prometheus:
   server:
     namespaces:
       - litellm  # This will be the default namespace, can be overridden during helm install
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      paths:
+        - /federate
+      pathType: Prefix
+      hosts:
+        - prometheus.example.com
+      tls:
+        - secretName: prometheus-tls
+          hosts:
+            - prometheus.example.com      
   prometheus-node-exporter:
     enabled: false
   prometheus-pushgateway:
@@ -70,6 +84,7 @@ prometheus:
 
 
 grafana:
+  enabled: true
   ingress:
     enabled: true
     annotations:
