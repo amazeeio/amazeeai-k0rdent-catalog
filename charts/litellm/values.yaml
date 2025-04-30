@@ -63,6 +63,7 @@ prometheus:
       - litellm  # This will be the default namespace, can be overridden during helm install
     ingress:
       enabled: false
+      ingressClassName: nginx
       annotations:
         nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
       paths:
