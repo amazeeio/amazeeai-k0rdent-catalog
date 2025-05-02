@@ -1,19 +1,4 @@
 lago:
-  ingress:
-    enabled: true
-    annotations:
-      cert-manager.io/issuer: "letsencrypt-prod"
-    className: nginx
-    apiHostname: lago-api.example.com
-    frontHostname: lago.example.com
-    hosts:
-    - lago-api.example.com
-    - lago.example.com
-    tls:
-    - hosts:
-      - lago-api.example.com
-      - lago.example.com
-      secretName: lago-tls
   apiUrl: https://lago-api.example.com
   frontUrl: https://lago.example.com
   # TODO use manged postgres and redis and disable here
@@ -29,3 +14,34 @@ lago:
       enabled: false
     signup:
       enabled: false
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/issuer: "letsencrypt-prod"
+      className: nginx
+      apiHostname: lago-api.example.com
+      frontHostname: lago.example.com
+  minio:
+    enabled: true
+    mode: standalone
+    replicas: 1          
+    fullnameOverride: "lago-minio"  # Matches the release name
+    buckets:
+      - name: "lago-minio"          # Matches the fullnameOverride
+        policy: none
+        purge: false
+        versioning: false
+        objectlocking: false
+    endpoint: "http://minio.amazeeai-temp1.amazeeio.review"          
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      annotations:
+        cert-manager.io/issuer: "letsencrypt-prod"
+      path: /
+      hosts:
+        - minio.amazeeai-temp1.amazeeio.review
+      tls: 
+        - hosts:
+          - minio.amazeeai-temp1.amazeeio.review
+          secretName: lago-minio-tls   
