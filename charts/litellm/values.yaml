@@ -117,37 +117,3 @@ grafana:
     size: 1Gi
   deploymentStrategy:
     type: Recreate
-
-
-lago:
-  enabled: false
-  ingress:
-    enabled: true
-    annotations:
-      cert-manager.io/issuer: "letsencrypt-prod"
-    className: nginx
-    apiHostname: lago-api.example.com
-    frontHostname: lago.example.com
-    hosts:
-    - "{{ .Values.lago.ingress.apiHostname }}"
-    - "{{ .Values.lago.ingress.frontHostname }}"
-    tls:
-    - hosts:
-      - "{{ .Values.lago.ingress.frontHostname }}"
-      - "{{ .Values.lago.ingress.apiHostname }}"
-      secretName: lago-tls
-  apiUrl: "https://{{ .Values.lago.ingress.apiHostname }}"
-  frontUrl: "https://{{ .Values.lago.ingress.frontHostname }}"
-  # TODO use manged postgres and redis and disable here
-  postgresql:
-    enabled: true
-  redis:
-    enabled: true
-  global:
-    postgresql:
-      image:
-        tag: 16.6.6
-    segment:
-      enabled: false
-    signup:
-      enabled: false

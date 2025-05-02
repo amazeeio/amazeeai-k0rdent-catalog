@@ -1,0 +1,9 @@
+apiVersion: v2
+name: lago
+description: A Helm chart to refer the official lago helm chart
+type: application
+version: 1.21.3
+dependencies:
+  - name: lago
+    version: 1.21.3
+    repository: https://charts.getlago.com/
