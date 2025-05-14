@@ -51,7 +51,7 @@ litellm-helm:
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
       store_model_in_db: true
-      store_prompts_in_spend_logs: true
+      store_prompts_in_spend_logs: false # This should only be true for specific debugging.
 
 
 prometheus:
