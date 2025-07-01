@@ -1,0 +1,112 @@
+apiVersion: k0rdent.mirantis.com/v1alpha1
+kind: ClusterDeployment
+metadata:
+  name: amazeeai-global
+  namespace: kcm-system
+spec:
+  config:
+    controlPlane:
+      instanceType: t3.medium
+      imageLookup:
+        org: "012345678901"
+    region: eu-central-2
+    worker:
+      instanceType: t3.medium
+      rootVolumeSize: 60
+      imageLookup:
+        org: "012345678901"
+  credential: aws-cluster-identity-cred
+  serviceSpec:
+    priority: 100
+    services:
+      - name: ingress-nginx
+        namespace: ingress-nginx
+        template: ingress-nginx-4-11-5
+        values: |
+          ingress-nginx:
+            controller:
+              config:
+                use-proxy-protocol: "true"
+                use-forwarded-headers: "true"
+              service:
+                annotations:
+                  service.beta.kubernetes.io/aws-load-balancer-type: "classic"
+                  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+      - name: cert-manager
+        namespace: cert-manager
+        template: cert-manager-1-17-2
+        values: |
+          cert-manager:
+            crds:
+              enabled: true
+      - name: litellm
+        namespace: litellm
+        template: litellm-0.4.0
+        values: |
+          host: dummy-host
+          litellm-helm:
+            enabled: false
+
+          prometheus:
+            server:
+              global:
+                external_labels:
+                  cluster: amazeeai-global1
+            extraScrapeConfigs: |
+              - job_name: 'amazeeai-backend'
+                scrape_interval: 15s
+                metrics_path: /metrics
+                scheme: https
+                honor_labels: true
+                static_configs:
+                  - targets:
+                      - #TODO
+              - job_name: 'federate-multi'
+                scrape_interval: 60s
+                metrics_path: /federate
+                scheme: https
+                static_configs:
+                  - targets:
+                      - prometheus.ch103.amazee.ai
+                params:
+                  'match[]':
+                    - '{__name__=~".+"}'  # Required to get all metrics
+
+          grafana:
+            adminUser: admin
+            adminPassword: changeme
+            ingress:
+              hosts:
+                - grafana.amazee.ai
+              tls:
+              - hosts:
+                - grafana.amazee.ai
+                secretName: grafana-tls
+      - name: amazee-ai
+        namespace: amazee-ai
+        template: amazee-ai-0.0.6
+        values: |
+          amazee-ai:
+            backend:
+              database:
+                url: "postgresql://postgres:fillme@amazee-ai-postgresql:5432/amazee_ai"
+              env_suffix: "development"
+              aws_access_key_id: "fillme"
+              aws_secret_access_key: "fillme"
+              ses_sender_email: "fillme"
+              dynamodb_region: "fillme"
+              ses_region: "fillme"
+              stripe_secret_key: "fillme"
+              secret_key: "fillme"
+              enable_metrics: true
+              passwordlessSignIn: true
+              enableLimits: true
+            frontend:
+              stripe_publishable_key: "fillme"
+              passwordlessSignIn: true
+            prometheus:
+              enabled: false
+            grafana:
+              enabled: false
+
+  template: aws-standalone-cp-0-2-1
