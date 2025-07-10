@@ -21,7 +21,7 @@ spec:
   - host: {{ .host | quote }}
     http:
       paths:
-      {{- range $.Values.ingress.paths }}
+      {{- range .paths }}
       - path: {{ .path | quote }}
         pathType: {{ .pathType }}
         backend:
@@ -57,7 +57,7 @@ spec:
   - host: {{ .host | quote }}
     http:
       paths:
-      {{- range $.Values.frontendIngress.paths }}
+      {{- range .paths }}
       - path: {{ .path | quote }}
         pathType: {{ .pathType }}
         backend:

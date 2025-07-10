@@ -30,8 +30,13 @@ backend:
 # backend ingress
 ingress:
   enabled: true
+  className: nginx
   hosts:
     - host: api.amazee-ai.local
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 8000
   tls:
     - hosts:
       - api.amazee-ai.local
@@ -40,8 +45,13 @@ ingress:
 # frontend ingress
 frontendIngress:
   enabled: true
+  className: nginx
   hosts:
     - host: amazee-ai.local
+      paths:
+        - path: /
+          pathType: Prefix
+          port: 3000
   tls:
     - hosts:
       - amazee-ai.local
