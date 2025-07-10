@@ -1,24 +1,70 @@
+{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: amazee-ai
+  name: amazee-ai-backend
   annotations:
-    cert-manager.io/issuer: "letsencrypt-prod"
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
 
 spec:
-  ingressClassName: nginx
+  ingressClassName: {{ .Values.ingress.className }}
   tls:
+  {{- range .Values.ingress.tls }}
   - hosts:
-    - {{ .Values.host }}
-    secretName: amazee-ai-tls
+    {{- range .hosts }}
+    - {{ . | quote }}
+    {{- end }}
+    secretName: {{ .secretName }}
+  {{- end }}
   rules:
-  - host: {{ .Values.host }}
+  {{- range .Values.ingress.hosts }}
+  - host: {{ .host | quote }}
     http:
       paths:
-      - path: /
-        pathType: Prefix
+      {{- range .paths }}
+      - path: {{ .path | quote }}
+        pathType: {{ .pathType }}
         backend:
           service:
             name: amazee-ai
             port:
-              name: http
+              number: {{ .port }}
+      {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.frontendIngress.enabled }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amazee-ai-frontend
+  annotations:
+    {{- toYaml .Values.frontendIngress.annotations | nindent 4 }}
+
+spec:
+  ingressClassName: {{ .Values.frontendIngress.className }}
+  tls:
+  {{- range .Values.frontendIngress.tls }}
+  - hosts:
+    {{- range .hosts }}
+    - {{ . | quote }}
+    {{- end }}
+    secretName: {{ .secretName }}
+  {{- end }}
+  rules:
+  {{- range .Values.frontendIngress.hosts }}
+  - host: {{ .host | quote }}
+    http:
+      paths:
+      {{- range .paths }}
+      - path: {{ .path | quote }}
+        pathType: {{ .pathType }}
+        backend:
+          service:
+            name: amazee-ai-frontend
+            port:
+              number: {{ .port }}
+      {{- end }}
+  {{- end }}
+{{- end }}

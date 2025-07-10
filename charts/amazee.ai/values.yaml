@@ -4,7 +4,7 @@ frontend:
   image:
     repository: ghcr.io/amazeeio/amazee.ai-frontend
     tag: "main"
-  stripe_publishable_key: "fillme"
+  stripePublishableKey: "fillme"
   passwordlessSignIn: true
 
 # Backend configuration
@@ -15,15 +15,15 @@ backend:
     tag: "main"
   database:
     url: "postgresql://postgres:fillme@amazee-ai-postgresql:5432/amazee_ai"
-  env_suffix: "development"
-  aws_access_key_id: "fillme"
-  aws_secret_access_key: "fillme"
-  ses_sender_email: "fillme"
-  dynamodb_region: "fillme"
-  ses_region: "fillme"
-  stripe_secret_key: "fillme"
-  secret_key: "fillme"
-  enable_metrics: true
+  envSuffix: "development"
+  awsAccessKeyId: "fillme"
+  awsSecretAccessKey: "fillme"
+  sesSenderEmail: "fillme"
+  dynamodbRegion: "fillme"
+  sesRegion: "fillme"
+  stripeSecretKey: "fillme"
+  secretKey: "fillme"
+  enableMetrics: true
   passwordlessSignIn: true
   enableLimits: true
 
@@ -61,7 +61,7 @@ prometheus:
   enabled: true
   server:
     global:
-      external_labels:
+      externalLabels:
         cluster: example.com
     namespaces:
       - amazee-ai
@@ -79,9 +79,9 @@ prometheus:
         - secretName: prometheus-tls
           hosts:
             - prometheus.example.com
-  prometheus-node-exporter:
+  prometheusNodeExporter:
     enabled: false
-  prometheus-pushgateway:
+  prometheusPushgateway:
     enabled: false
   extraScrapeConfigs: |
     - job_name: 'amazee-ai'
