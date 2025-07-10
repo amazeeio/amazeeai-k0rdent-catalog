@@ -2,7 +2,7 @@ apiVersion: v2
 name: amazee-ai
 description: A Helm chart to refer the official amazee.ai helm chart
 type: application
-version: 0.0.8
+version: 0.0.9
 dependencies:
   - name: amazee-ai
     version: 0.0.6
@@ -11,12 +11,12 @@ dependencies:
   - name: postgresql
     version: 16.7.12
     repository: https://charts.bitnami.com/bitnami
-    condition: postgresql.enabled
+    condition: amazee-ai.postgresql.enabled
   - name: prometheus
     version: 27.8.0
     repository: https://prometheus-community.github.io/helm-charts
-    condition: prometheus.enabled
+    condition: amazee-ai.prometheus.enabled
   - name: grafana
     version: 8.12.0
     repository: https://grafana.github.io/helm-charts
-    condition: grafana.enabled
+    condition: amazee-ai.grafana.enabled
