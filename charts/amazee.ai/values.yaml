@@ -1,131 +1,132 @@
-# Frontend configuration
-frontend:
-  enabled: true
-  image:
-    repository: ghcr.io/amazeeio/amazee.ai-frontend
-    tag: "main"
-  stripePublishableKey: "fillme"
-  passwordlessSignIn: true
+amazee-ai:
+  # Frontend configuration
+  frontend:
+    enabled: true
+    image:
+      repository: ghcr.io/amazeeio/amazee.ai-frontend
+      tag: "main"
+    stripePublishableKey: "fillme"
+    passwordlessSignIn: true
 
-# Backend configuration
-backend:
-  enabled: true
-  image:
-    repository: ghcr.io/amazeeio/amazee.ai-backend
-    tag: "main"
-  database:
-    url: "postgresql://postgres:fillme@amazee-ai-postgresql:5432/amazee_ai"
-  envSuffix: "development"
-  awsAccessKeyId: "fillme"
-  awsSecretAccessKey: "fillme"
-  sesSenderEmail: "fillme"
-  dynamodbRegion: "fillme"
-  sesRegion: "fillme"
-  stripeSecretKey: "fillme"
-  secretKey: "fillme"
-  enableMetrics: true
-  passwordlessSignIn: true
-  enableLimits: true
+  # Backend configuration
+  backend:
+    enabled: true
+    image:
+      repository: ghcr.io/amazeeio/amazee.ai-backend
+      tag: "main"
+    database:
+      url: "postgresql://postgres:fillme@amazee-ai-postgresql:5432/amazee_ai"
+    envSuffix: "development"
+    awsAccessKeyId: "fillme"
+    awsSecretAccessKey: "fillme"
+    sesSenderEmail: "fillme"
+    dynamodbRegion: "fillme"
+    sesRegion: "fillme"
+    stripeSecretKey: "fillme"
+    secretKey: "fillme"
+    enableMetrics: true
+    passwordlessSignIn: true
+    enableLimits: true
 
-# backend ingress
-ingress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: api.amazee-ai.local
-      paths:
-        - path: /
-          pathType: Prefix
-          port: 8000
-  tls:
-    - hosts:
-      - api.amazee-ai.local
-      secretName: amazee-ai-tls
-
-# frontend ingress
-frontendIngress:
-  enabled: true
-  className: nginx
-  hosts:
-    - host: amazee-ai.local
-      paths:
-        - path: /
-          pathType: Prefix
-          port: 3000
-  tls:
-    - hosts:
-      - amazee-ai.local
-      secretName: amazee-ai-tls
-
-postgresql:
-  enabled: true
-  auth:
-    postgresPassword: "fillme"
-    database: "amazee_ai"
-  primary:
-    persistence:
-      enabled: true
-      size: 10Gi
-
-prometheus:
-  enabled: true
-  server:
-    global:
-      externalLabels:
-        cluster: example.com
-    namespaces:
-      - amazee-ai
-    ingress:
-      enabled: false
-      ingressClassName: nginx
-      annotations:
-        cert-manager.io/issuer: "letsencrypt-prod"
-        nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
-      path: /federate
-      pathType: Prefix
-      hosts:
-        - prometheus.example.com
-      tls:
-        - secretName: prometheus-tls
-          hosts:
-            - prometheus.example.com
-  prometheusNodeExporter:
-    enabled: false
-  prometheusPushgateway:
-    enabled: false
-  extraScrapeConfigs: |
-    - job_name: 'amazee-ai'
-      scrape_interval: 15s
-      static_configs:
-        - targets: ['amazee-ai:8000']
-
-grafana:
-  enabled: true
+  # backend ingress
   ingress:
     enabled: true
-    annotations:
-      cert-manager.io/issuer: "letsencrypt-prod"
-    ingressClassName: nginx
+    className: nginx
     hosts:
-    - grafana.example.com
+      - host: api.amazee-ai.local
+        paths:
+          - path: /
+            pathType: Prefix
+            port: 8800
     tls:
-    - hosts:
-      - grafana.example.com
-      secretName: grafana-tls
+      - hosts:
+        - api.amazee-ai.local
+        secretName: amazee-ai-tls
 
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: Prometheus
-          type: prometheus
-          url: http://amazee-ai-prometheus-server
-          access: proxy
-          isDefault: true
-          editable: false
-  persistence:
-    type: pvc
+  # frontend ingress
+  frontendIngress:
     enabled: true
-    size: 1Gi
-  deploymentStrategy:
-    type: Recreate
+    className: nginx
+    hosts:
+      - host: amazee-ai.local
+        paths:
+          - path: /
+            pathType: Prefix
+            port: 3000
+    tls:
+      - hosts:
+        - amazee-ai.local
+        secretName: amazee-ai-tls
+
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: "fillme"
+      database: "amazee_ai"
+    primary:
+      persistence:
+        enabled: true
+        size: 10Gi
+
+  prometheus:
+    enabled: true
+    server:
+      global:
+        externalLabels:
+          cluster: example.com
+      namespaces:
+        - amazee-ai
+      ingress:
+        enabled: false
+        ingressClassName: nginx
+        annotations:
+          cert-manager.io/issuer: "letsencrypt-prod"
+          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+        path: /federate
+        pathType: Prefix
+        hosts:
+          - prometheus.example.com
+        tls:
+          - secretName: prometheus-tls
+            hosts:
+              - prometheus.example.com
+    prometheusNodeExporter:
+      enabled: false
+    prometheusPushgateway:
+      enabled: false
+    extraScrapeConfigs: |
+      - job_name: 'amazee-ai'
+        scrape_interval: 15s
+        static_configs:
+          - targets: ['amazee-ai:8000']
+
+  grafana:
+    enabled: true
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/issuer: "letsencrypt-prod"
+      ingressClassName: nginx
+      hosts:
+      - grafana.example.com
+      tls:
+      - hosts:
+        - grafana.example.com
+        secretName: grafana-tls
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://amazee-ai-prometheus-server
+            access: proxy
+            isDefault: true
+            editable: false
+    persistence:
+      type: pvc
+      enabled: true
+      size: 1Gi
+    deploymentStrategy:
+      type: Recreate
