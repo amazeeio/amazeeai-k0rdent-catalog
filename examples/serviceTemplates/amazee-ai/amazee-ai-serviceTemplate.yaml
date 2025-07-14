@@ -1,7 +1,7 @@
 apiVersion: k0rdent.mirantis.com/v1alpha1
 kind: ServiceTemplate
 metadata:
-  name: amazee-ai-0.0.14
+  name: amazee-ai-0.0.15
   namespace: kcm-system
   annotations:
     helm.sh/resource-policy: keep
@@ -9,7 +9,7 @@ spec:
   helm:
     chartSpec:
       chart: amazee-ai
-      version: 0.0.14-provisioner-examples
+      version: 0.0.15-provisioner-examples
       interval: 10m0s
       sourceRef:
         kind: HelmRepository
