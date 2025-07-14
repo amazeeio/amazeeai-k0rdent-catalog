@@ -8,8 +8,8 @@ spec:
     controlPlane:
       instanceType: t3.medium
       imageLookup:
-        org: "137112412989"
-    region: eu-central-2
+        org: "137112412989" # Verify this if changing the region
+    region: eu-west-1
     worker:
       instanceType: t3.medium
       rootVolumeSize: 60
@@ -36,76 +36,85 @@ spec:
         namespace: cert-manager
         template: cert-manager-1-17-1
         values: |
-          cert-manager:
-            crds:
-              enabled: true
-      - name: litellm
-        namespace: litellm
-        template: litellm-0.4.0
-        values: |
-          host: dummy-host
-          litellm-helm:
-            enabled: false
-          prometheus:
-            enabled: false
-          grafana:
-            enabled: false
+          crds:
+            enabled: true
       - name: amazee-ai
         namespace: amazee-ai
-        template: amazee-ai-0.0.7
+        template: amazee-ai-0.0.18
         values: |
           amazee-ai:
             enabled: true
             postgresql:
               enabled: false
-              external:
-                enabled: true
-                  url: "postgresql://posgres:fillme@database-location:5432/postgres"
             backend:
               enabled: true
-              replicas: 2
+              replicas: 1
+              resources:
+                requests:
+                  memory: "250Mi"
+                  cpu: "500m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "1000m"
               database:
-                  url: "postgresql://posgres:fillme@database-location:5432/postgres"
-              env_suffix: "development"
-              aws_access_key_id: "fillme"
-              aws_secret_access_key: "fillme"
-              ses_sender_email: "fillme"
-              dynamodb_region: "fillme"
-              ses_region: "fillme"
-              stripe_secret_key: "fillme"
-              secret_key: "supersecurepasswordkey"
-              enable_metrics: true
+                url: "postgresql://postgres:password@db_host:5432/amazee_ai"
+              envSuffix: "development"
+              awsAccessKeyId: "fillme"
+              awsSecretAccessKey: "fillme"
+              sesSenderEmail: "fillme"
+              dynamodbRegion: "fillme"
+              sesRegion: "fillme"
+              stripeSecretKey: "fillme"
+              secretKey: "supersecurepasswordkey"
+              enableMetrics: true
               passwordlessSignIn: false
               enableLimits: false
             frontend:
               enabled: true
-              replicas: 2
-              stripe_publishable_key: "fillme"
+              replicas: 1
+              stripePublishableKey: "fillme"
               passwordlessSignIn: false
-              apiUrl: "https://api.amazeeai.pippah.co.za"
-            ingress:
-              enabled: true
-              hosts:
-                - host: api.amazeeai.pippah.co.za
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      port: 8800
-              tls:
-                - secretName: api-amazeeai-pippah-co-za-tls
-                  hosts:
-                    - api.amazeeai.pippah.co.za
-            frontendIngress:
-              enabled: true
-              hosts:
-                - host: amazeeai.pippah.co.za
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      port: 3000
-              tls:
-                - secretName: amazeeai-pippah-co-za-tls
-                  hosts:
-                    - amazeeai.pippah.co.za
+              apiUrl: "https://api.amazee-ai.local"
+            grafana:
+              enabled: false
+            prometheus:
+              enabled: false
+          ingress:
+            enabled: true
+            className: "nginx"
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+              nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+              nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+            hosts:
+              - host: api.amazee-ai.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    port: 8800
+            tls:
+              - hosts:
+                - api.amazee-ai.local
+                secretName: api-amazee-ai-tls
+          frontendIngress:
+            enabled: true
+            className: "nginx"
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+            hosts:
+              - host: amazee-ai.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    port: 3000
+            tls:
+              - hosts:
+                - amazee-ai.local
+                secretName: amazee-ai-tls
 
   template: aws-standalone-cp-0-2-1
