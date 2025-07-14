@@ -2,10 +2,10 @@ apiVersion: v2
 name: amazee-ai
 description: A Helm chart to refer the official amazee.ai helm chart
 type: application
-version: 0.0.18
+version: 0.1.0
 dependencies:
   - name: amazee-ai
-    version: 0.0.11
+    version: 0.1.0
     repository: oci://ghcr.io/amazeeio/amazee.ai
     condition: amazee-ai.enabled
   - name: postgresql

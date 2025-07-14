@@ -81,7 +81,6 @@ amazee-ai:
         ingressClassName: nginx
         annotations:
           cert-manager.io/issuer: "letsencrypt-prod"
-          nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
         path: /federate
         pathType: Prefix
         hosts:
@@ -98,7 +97,7 @@ amazee-ai:
       - job_name: 'amazee-ai'
         scrape_interval: 15s
         static_configs:
-          - targets: ['amazee-ai:8000']
+          - targets: ['amazee-ai:8800']
 
   grafana:
     enabled: true
