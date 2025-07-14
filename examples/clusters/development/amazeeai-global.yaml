@@ -1,0 +1,120 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: amazeeai-global-provisioner
+  namespace: kcm-system
+spec:
+  config:
+    controlPlane:
+      instanceType: t3.medium
+      imageLookup:
+        org: "137112412989" # Verify this if changing the region
+    region: eu-west-1
+    worker:
+      instanceType: t3.medium
+      rootVolumeSize: 60
+      imageLookup:
+        org: "137112412989"
+  credential: aws-cluster-identity-cred
+  serviceSpec:
+    priority: 100
+    services:
+      - name: ingress-nginx
+        namespace: ingress-nginx
+        template: ingress-nginx-4-12-1
+        values: |
+          ingress-nginx:
+            controller:
+              config:
+                use-proxy-protocol: "true"
+                use-forwarded-headers: "true"
+              service:
+                annotations:
+                  service.beta.kubernetes.io/aws-load-balancer-type: "classic"
+                  service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+      - name: cert-manager
+        namespace: cert-manager
+        template: cert-manager-1-17-1
+        values: |
+          crds:
+            enabled: true
+      - name: amazee-ai
+        namespace: amazee-ai
+        template: amazee-ai-0.0.18
+        values: |
+          amazee-ai:
+            enabled: true
+            postgresql:
+              enabled: false
+            backend:
+              enabled: true
+              replicas: 1
+              resources:
+                requests:
+                  memory: "250Mi"
+                  cpu: "500m"
+                limits:
+                  memory: "1Gi"
+                  cpu: "1000m"
+              database:
+                url: "postgresql://postgres:password@db_host:5432/amazee_ai"
+              envSuffix: "development"
+              awsAccessKeyId: "fillme"
+              awsSecretAccessKey: "fillme"
+              sesSenderEmail: "fillme"
+              dynamodbRegion: "fillme"
+              sesRegion: "fillme"
+              stripeSecretKey: "fillme"
+              secretKey: "supersecurepasswordkey"
+              enableMetrics: true
+              passwordlessSignIn: false
+              enableLimits: false
+            frontend:
+              enabled: true
+              replicas: 1
+              stripePublishableKey: "fillme"
+              passwordlessSignIn: false
+              apiUrl: "https://api.amazee-ai.local"
+            grafana:
+              enabled: false
+            prometheus:
+              enabled: false
+          ingress:
+            enabled: true
+            className: "nginx"
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+              nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+              nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+            hosts:
+              - host: api.amazee-ai.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    port: 8800
+            tls:
+              - hosts:
+                - api.amazee-ai.local
+                secretName: api-amazee-ai-tls
+          frontendIngress:
+            enabled: true
+            className: "nginx"
+            annotations:
+              kubernetes.io/ingress.class: nginx
+              nginx.ingress.kubernetes.io/ssl-redirect: "false"
+              nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+            hosts:
+              - host: amazee-ai.local
+                paths:
+                  - path: /
+                    pathType: Prefix
+                    port: 3000
+            tls:
+              - hosts:
+                - amazee-ai.local
+                secretName: amazee-ai-tls
+
+  template: aws-standalone-cp-0-2-1

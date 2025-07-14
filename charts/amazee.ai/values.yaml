@@ -1,0 +1,131 @@
+amazee-ai:
+  # Frontend configuration
+  frontend:
+    enabled: true
+    image:
+      repository: ghcr.io/amazeeio/amazee.ai-frontend
+      tag: "main"
+    stripePublishableKey: "fillme"
+    passwordlessSignIn: true
+
+  # Backend configuration
+  backend:
+    enabled: true
+    image:
+      repository: ghcr.io/amazeeio/amazee.ai-backend
+      tag: "main"
+    database:
+      url: "postgresql://postgres:fillme@amazee-ai-postgresql:5432/amazee_ai"
+    envSuffix: "development"
+    awsAccessKeyId: "fillme"
+    awsSecretAccessKey: "fillme"
+    sesSenderEmail: "fillme"
+    dynamodbRegion: "fillme"
+    sesRegion: "fillme"
+    stripeSecretKey: "fillme"
+    secretKey: "fillme"
+    enableMetrics: true
+    passwordlessSignIn: true
+    enableLimits: true
+
+  # backend ingress
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: api.amazee-ai.local
+        paths:
+          - path: /
+            pathType: Prefix
+            port: 8800
+    tls:
+      - hosts:
+        - api.amazee-ai.local
+        secretName: amazee-ai-tls
+
+  # frontend ingress
+  frontendIngress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: amazee-ai.local
+        paths:
+          - path: /
+            pathType: Prefix
+            port: 3000
+    tls:
+      - hosts:
+        - amazee-ai.local
+        secretName: amazee-ai-tls
+
+  postgresql:
+    enabled: true
+    auth:
+      postgresPassword: "fillme"
+      database: "amazee_ai"
+    primary:
+      persistence:
+        enabled: true
+        size: 10Gi
+
+  prometheus:
+    enabled: true
+    server:
+      global:
+        externalLabels:
+          cluster: example.com
+      namespaces:
+        - amazee-ai
+      ingress:
+        enabled: false
+        ingressClassName: nginx
+        annotations:
+          cert-manager.io/issuer: "letsencrypt-prod"
+        path: /federate
+        pathType: Prefix
+        hosts:
+          - prometheus.example.com
+        tls:
+          - secretName: prometheus-tls
+            hosts:
+              - prometheus.example.com
+    prometheusNodeExporter:
+      enabled: false
+    prometheusPushgateway:
+      enabled: false
+    extraScrapeConfigs: |
+      - job_name: 'amazee-ai'
+        scrape_interval: 15s
+        static_configs:
+          - targets: ['amazee-ai:8800']
+
+  grafana:
+    enabled: true
+    ingress:
+      enabled: true
+      annotations:
+        cert-manager.io/issuer: "letsencrypt-prod"
+      ingressClassName: nginx
+      hosts:
+      - grafana.example.com
+      tls:
+      - hosts:
+        - grafana.example.com
+        secretName: grafana-tls
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://amazee-ai-prometheus-server
+            access: proxy
+            isDefault: true
+            editable: false
+    persistence:
+      type: pvc
+      enabled: true
+      size: 1Gi
+    deploymentStrategy:
+      type: Recreate

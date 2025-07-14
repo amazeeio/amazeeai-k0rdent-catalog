@@ -1,0 +1,84 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: amazeeai-ch2
+  namespace: kcm-system
+spec:
+  config:
+    controlPlane:
+      instanceType: t3.medium
+      imageLookup:
+        org: "084269151793" # Verify this if changing the region
+    region: eu-central-2
+    worker:
+      instanceType: t3.medium
+      rootVolumeSize: 60
+      imageLookup:
+        org: "084269151793"
+  credential: aws-cluster-identity-cred
+  serviceSpec:
+    priority: 100
+    services:
+      - name: ingress-nginx
+        namespace: ingress-nginx
+        template: ingress-nginx-4-12-1
+        values: |
+          controller:
+            config:
+              use-proxy-protocol: "true"
+              use-forwarded-headers: "true"
+            service:
+              annotations:
+                service.beta.kubernetes.io/aws-load-balancer-type: "classic"
+                service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+      - name: cert-manager
+        namespace: cert-manager
+        template: cert-manager-1-17-1
+        values: |
+          crds:
+            enabled: true
+          foo: bar
+      - name: litellm
+        namespace: litellm
+        template: litellm-0.4.0
+        values: |
+          host: litellm.amazee-ai.local
+          litellm-helm:
+            envVars:
+              AWS_ACCESS_KEY_ID: "fillme"
+              AWS_SECRET_ACCESS_KEY: "fillme"
+              AWS_REGION: eu-central-2
+              AWS_REGION_NAME: "eu-central-2" # There is a chance this will conflict with AWS_REGION
+              UI_USERNAME: admin
+              UI_PASSWORD: fillme
+            image:
+              repository: ghcr.io/amazeeio/litellm-database
+              tag: "main"
+            proxy_config:
+              litellm_settings:
+                callbacks: ["prometheus"]
+                turn_off_message_logging: true
+            general_settings:
+              store_prompts_in_spend_logs: false
+
+          prometheus:
+            server:
+              global:
+                external_labels:
+                  cluster: amazeeai-ch2
+              ingress:
+                enabled: true
+                annotations:
+                  cert-manager.io/issuer: "letsencrypt-prod"
+                path: /federate
+                hosts:
+                  - prometheus.amazee-ai.local
+                tls:
+                  - secretName: prometheus-tls
+                    hosts:
+                      - prometheus.amazee-ai.local
+
+          grafana:
+            enabled: false
+
+  template: aws-standalone-cp-0-2-1
