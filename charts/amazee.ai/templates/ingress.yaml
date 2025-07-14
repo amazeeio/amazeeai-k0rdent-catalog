@@ -1,15 +1,16 @@
-{{- if .Values.amazee-ai.ingress.enabled }}
+{{- $chartName := "amazee-ai" -}}
+{{- if (index .Values $chartName).ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: amazee-ai-backend
   annotations:
-    {{- toYaml .Values.amazee-ai.ingress.annotations | nindent 4 }}
+    {{- toYaml (index .Values $chartName).ingress.annotations | nindent 4 }}
 
 spec:
-  ingressClassName: {{ .Values.amazee-ai.ingress.className }}
+  ingressClassName: {{ (index .Values $chartName).ingress.className }}
   tls:
-  {{- range .Values.amazee-ai.ingress.tls }}
+  {{- range (index .Values $chartName).ingress.tls }}
   - hosts:
     {{- range .hosts }}
     - {{ . | quote }}
@@ -17,7 +18,7 @@ spec:
     secretName: {{ .secretName }}
   {{- end }}
   rules:
-  {{- range .Values.amazee-ai.ingress.hosts }}
+  {{- range (index .Values $chartName).ingress.hosts }}
   - host: {{ .host | quote }}
     http:
       paths:
@@ -33,19 +34,19 @@ spec:
   {{- end }}
 {{- end }}
 
-{{- if .Values.amazee-ai.frontendIngress.enabled }}
+{{- if (index .Values $chartName).frontendIngress.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: amazee-ai-frontend
   annotations:
-    {{- toYaml .Values.amazee-ai.frontendIngress.annotations | nindent 4 }}
+    {{- toYaml (index .Values $chartName).frontendIngress.annotations | nindent 4 }}
 
 spec:
-  ingressClassName: {{ .Values.amazee-ai.frontendIngress.className }}
+  ingressClassName: {{ (index .Values $chartName).frontendIngress.className }}
   tls:
-  {{- range .Values.amazee-ai.frontendIngress.tls }}
+  {{- range (index .Values $chartName).frontendIngress.tls }}
   - hosts:
     {{- range .hosts }}
     - {{ . | quote }}
@@ -53,7 +54,7 @@ spec:
     secretName: {{ .secretName }}
   {{- end }}
   rules:
-  {{- range .Values.amazee-ai.frontendIngress.hosts }}
+  {{- range (index .Values $chartName).frontendIngress.hosts }}
   - host: {{ .host | quote }}
     http:
       paths:
