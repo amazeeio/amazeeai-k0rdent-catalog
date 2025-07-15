@@ -40,7 +40,7 @@ spec:
             enabled: true
       - name: amazee-ai
         namespace: amazee-ai
-        template: amazee-ai-0.0.18
+        template: amazee-ai-0.1.0
         values: |
           amazee-ai:
             enabled: true
