@@ -1,0 +1,16 @@
+apiVersion: k0rdent.mirantis.com/v1alpha1
+kind: ServiceTemplate
+metadata:
+  name: crossplane-0.1.0
+  namespace: kcm-system
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: crossplane
+      version: 0.1.0-crossplane-resources
+      interval: 10m0s
+      sourceRef:
+        kind: HelmRepository
+        name: amazeeai-k0rdent-catalog
