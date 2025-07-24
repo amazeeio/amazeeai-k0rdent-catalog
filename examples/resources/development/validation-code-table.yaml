@@ -1,0 +1,7 @@
+apiVersion: db.amazee.ai/v1alpha1
+kind: NoSQL
+metadata:
+  name: validation-code-table
+spec:
+  location: "EU"
+  deletionProtection: false

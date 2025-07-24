@@ -1,0 +1,49 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: creds-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-crossplane-secret
+      key: creds
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-vectordb
+spec:
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDB
+  mode: Pipeline
+  pipeline:
+  - step: run-the-template
+    functionRef:
+      name: amazeeio-function-vectordb
+    input:
+      apiVersion: template.fn.crossplane.io/v1beta1
+      kind: Input
+      version: v1beta2
+---
+apiVersion: db.amazee.ai/v1alpha1
+kind: VectorDBClaim
+metadata:
+  name: vector-db-ir1
+spec:
+  # Required parameter - AWS region
+  location: eu-west-1
+
+  # Optional parameters with defaults
+  engineVersion: "16.6"
+  minCapacity: 2
+  maxCapacity: 16
+  databaseName: "vectordb"
+  masterUsername: "postgres"
+  backupRetentionPeriod: 7
+  backupWindow: "06:42-07:12"
+  maintenanceWindow: "wed:04:35-wed:05:05"
+  deletionProtection: true
+  generatePassword: true

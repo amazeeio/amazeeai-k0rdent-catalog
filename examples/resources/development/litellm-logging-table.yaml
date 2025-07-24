@@ -1,0 +1,6 @@
+apiVersion: db.amazee.ai/v1alpha1
+kind: NoSQL
+metadata:
+  name: litellm-logging-table
+spec:
+  location: "EU"

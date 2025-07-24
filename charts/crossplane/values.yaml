@@ -1,0 +1,52 @@
+# Crossplane Helm Chart Values for k0rdent System
+# Based on https://docs.crossplane.io/latest/software/install/#customize-the-crossplane-helm-chart
+
+crossplane:
+  # Resource configuration for Crossplane pods (increased from defaults)
+  resourcesCrossplane:
+    limits:
+      cpu: "1000m"
+      memory: "2048Mi"
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+
+  # Resource configuration for RBAC Manager pods (increased from defaults)
+  resourcesRBACManager:
+    limits:
+      cpu: "200m"
+      memory: "512Mi"
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+
+  # Deployment configuration (custom revision history limit)
+  revisionHistoryLimit: 10
+
+  # Package cache configuration (increased size limit)
+  packageCache:
+    sizeLimit: "1Gi"
+
+  # Function packages to install
+  function:
+    packages:
+      - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
+      - "xpkg.crossplane.io/amazeeai-k0rdent-catalog/function-vectordb:v0.0.dev1"
+
+  # Provider packages to install
+  provider:
+    packages:
+      - "xpkg.crossplane.io/crossplane-contrib/provider-family-aws:v1.23.0"
+      - "xpkg.crossplane.io/crossplane-contrib/provider-aws-dynamodb:v1.23.0"
+      - "xpkg.crossplane.io/crossplane-contrib/provider-aws-vpc:v1.23.0"
+      - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v1.23.0"
+      - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v1.23.0"
+      - "xpkg.crossplane.io/crossplane-contrib/provider-kubernetes:v0.1.0"
+
+  # Feature flags - only stable beta features enabled
+  args:
+    - "--enable-composition-webhook-schema-validation"
+    - "--enable-deployment-runtime-configs"
+    - "--enable-usages"
+    - "--enable-ssa-claims"
+    - "--enable-realtime-compositions"

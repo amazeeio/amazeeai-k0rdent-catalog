@@ -1,0 +1,20 @@
+# Replace this with your XR!
+apiVersion: example.crossplane.io/v1
+kind: XR
+metadata:
+  name: example-xr
+spec:
+  # Required parameter - AWS region
+  location: us-east-2
+
+  # Optional parameters with defaults
+  engineVersion: "16.6"
+  minCapacity: 2
+  maxCapacity: 16
+  databaseName: "vectordb"
+  masterUsername: "postgres"
+  backupRetentionPeriod: 7
+  backupWindow: "06:42-07:12"
+  maintenanceWindow: "wed:04:35-wed:05:05"
+  deletionProtection: true
+  generatePassword: true

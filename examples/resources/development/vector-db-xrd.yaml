@@ -1,0 +1,68 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: vectordbs.db.amazee.ai
+spec:
+  group: db.amazee.ai
+  names:
+    kind: VectorDB
+    plural: vectordbs
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              location:
+                type: string
+                description: "AWS region for the vector database"
+              engineVersion:
+                type: string
+                default: "16.6"
+                description: "Aurora PostgreSQL engine version"
+              minCapacity:
+                type: number
+                default: 2
+                description: "Minimum ACU for Serverless v2"
+              maxCapacity:
+                type: number
+                default: 16
+                description: "Maximum ACU for Serverless v2"
+              databaseName:
+                type: string
+                default: "vectordb"
+                description: "Name of the database"
+              masterUsername:
+                type: string
+                default: "postgres"
+                description: "Master database username"
+              backupRetentionPeriod:
+                type: integer
+                default: 7
+                description: "Days to retain backups"
+              backupWindow:
+                type: string
+                default: "06:42-07:12"
+                description: "Daily backup window"
+              maintenanceWindow:
+                type: string
+                default: "wed:04:35-wed:05:05"
+                description: "Weekly maintenance window"
+              deletionProtection:
+                type: boolean
+                default: true
+                description: "Enable deletion protection"
+              generatePassword:
+                type: boolean
+                default: true
+                description: "Generate random master password"
+            required:
+            - location
+    served: true
+    referenceable: true
+  claimNames:
+    kind: VectorDBClaim
+    plural: vectordb-claims

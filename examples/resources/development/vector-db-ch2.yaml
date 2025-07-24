@@ -1,0 +1,17 @@
+apiVersion: db.amazee.ai/v1alpha1
+kind: VectorDBClaim
+metadata:
+  name: litellm-dev-vector-db-ch2
+  namespace: litellm
+spec:
+  location: "eu-central-2"
+  engineVersion: "16.6"
+  minCapacity: 0.5
+  maxCapacity: 16
+  allocatedStorage: 100
+  masterUsername: "postgres"
+  backupRetentionPeriod: 7
+  backupWindow: "06:42-07:12"
+  maintenanceWindow: "wed:04:35-wed:05:05"
+  deletionProtection: true
+  generatePassword: true

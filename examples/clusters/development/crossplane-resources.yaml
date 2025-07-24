@@ -1,0 +1,39 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: crossplane-resources
+  namespace: k0rdent
+spec:
+  config:
+    controlPlane:
+      instanceType: t3.medium
+      imageLookup:
+        org: "137112412989" # Verify this if changing the region
+    region: eu-west-1 # Using ireland for now
+    worker:
+      instanceType: t3.medium
+      rootVolumeSize: 60
+      imageLookup:
+        org: "137112412989"
+  credential: aws-cluster-identity-cred
+  serviceSpec:
+    priority: 100
+    services:
+      - name: crossplane
+        namespace: crossplane-system
+        template: crossplane-0.1.1
+        values: |
+          crossplane:
+            function:
+              packages:
+                - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
+                - "ghcr.io/amazeeio/function-vectordb:0.0.dev1"
+            provider:
+              packages:
+                - "xpkg.crossplane.io/crossplane-contrib/provider-family-aws:v1.23.0"
+                - "xpkg.crossplane.io/crossplane-contrib/provider-aws-dynamodb:v1.23.0"
+                - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v1.23.0"
+                - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v1.23.0"
+                - "xpkg.crossplane.io/crossplane-contrib/provider-aws-vpc:v1.23.0"
+
+  template: aws-standalone-cp-1-0-10
