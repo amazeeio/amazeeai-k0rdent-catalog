@@ -19,8 +19,14 @@ spec:
               location:
                 type: string
                 oneOf:
-                - pattern: '^EU$'
-                - pattern: '^US$'
+                - pattern: '^eu-central-2$'
+                - pattern: '^eu-west-2$'
+                - pattern: '^eu-central-1$'
+                - pattern: '^us-east-1$'
+                - pattern: '^us-east-2$'
+                - pattern: '^ap-southeast-2$'
+                - pattern: '^ca-central-1$'
+                - pattern: '^af-south-1$'
               engineVersion:
                 type: string
                 default: "16.6"
@@ -93,11 +99,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Internet Gateway
       - name: internet-gateway
@@ -115,11 +116,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Public Subnet 1
       - name: public-subnet-1
@@ -140,19 +136,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1a"
-                US: "us-east-2a"
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
 
       # Public Subnet 2
       - name: public-subnet-2
@@ -173,19 +170,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1b"
-                US: "us-east-2b"
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
 
       # Private Subnet 1
       - name: private-subnet-1
@@ -205,19 +203,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1a"
-                US: "us-east-2a"
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
 
       # Private Subnet 2
       - name: private-subnet-2
@@ -237,19 +236,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1b"
-                US: "us-east-2b"
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
 
       # Database Subnet 1
       - name: database-subnet-1
@@ -269,19 +269,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1a"
-                US: "us-east-2a"
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
 
       # Database Subnet 2
       - name: database-subnet-2
@@ -301,19 +302,20 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.availabilityZone"
             transforms:
             - type: map
               map:
-                EU: "eu-west-1b"
-                US: "us-east-2b"
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
 
       # Database Subnet Group
       - name: database-subnet-group
@@ -332,11 +334,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.subnetIds[0]"
@@ -364,11 +361,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Public Route (Internet Gateway)
       - name: public-route
@@ -387,11 +379,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.routeTableId"
@@ -419,11 +406,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Database Route (Internet Gateway)
       - name: database-route
@@ -442,11 +424,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.routeTableId"
@@ -474,11 +451,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.subnetId"
@@ -505,11 +477,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.subnetId"
@@ -536,11 +503,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.subnetId"
@@ -567,11 +529,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: ToCompositeFieldPath
             fromFieldPath: "status.atProvider.id"
             toFieldPath: "spec.forProvider.subnetId"
@@ -614,11 +571,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # IAM Role for RDS Monitoring
       - name: rds-monitoring-role
@@ -649,11 +601,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Parameter Group for vector extension
       - name: parameter-group
@@ -674,11 +621,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Cluster Parameter Group for vector extension
       - name: cluster-parameter-group
@@ -699,11 +641,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
 
       # Random password generator
       - name: random-password
@@ -735,7 +672,6 @@ spec:
               region: "us-east-2"
               engine: "aurora-postgresql"
               engineVersion: "16.6"
-              databaseName: "vectordb"
               masterUsername: "postgres"
               masterPassword: "dummy-password"
               skipFinalSnapshot: false
@@ -759,17 +695,9 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.engineVersion"
             toFieldPath: "spec.forProvider.engineVersion"
-          - type: FromCompositeFieldPath
-            fromFieldPath: "spec.databaseName"
-            toFieldPath: "spec.forProvider.databaseName"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.masterUsername"
             toFieldPath: "spec.forProvider.masterUsername"
@@ -837,11 +765,6 @@ spec:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
             toFieldPath: "spec.forProvider.region"
-            transforms:
-            - type: map
-              map:
-                EU: "eu-west-1"
-                US: "us-east-2"
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.minCapacity"
             toFieldPath: "spec.forProvider.serverlessV2ScalingConfiguration.minCapacity"
