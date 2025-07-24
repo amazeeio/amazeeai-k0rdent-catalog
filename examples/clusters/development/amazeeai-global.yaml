@@ -2,7 +2,7 @@ apiVersion: k0rdent.mirantis.com/v1beta1
 kind: ClusterDeployment
 metadata:
   name: amazeeai-global-provisioner
-  namespace: kcm-system
+  namespace: k0rdent
 spec:
   config:
     controlPlane:

@@ -1,3 +1,15 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: creds-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-crossplane-secret
+      key: creds
+---
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -95,6 +107,8 @@ spec:
               enableDnsSupport: true
               tags:
                 Name: "vector-db-vpc"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -112,6 +126,8 @@ spec:
                 matchControllerRef: true
               tags:
                 Name: "vector-db-igw"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -132,6 +148,8 @@ spec:
               mapPublicIpOnLaunch: true
               tags:
                 Name: "vector-db-public-subnet-1"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -166,6 +184,8 @@ spec:
               mapPublicIpOnLaunch: true
               tags:
                 Name: "vector-db-public-subnet-2"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -199,6 +219,8 @@ spec:
               availabilityZone: "us-east-2a"
               tags:
                 Name: "vector-db-private-subnet-1"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -232,6 +254,8 @@ spec:
               availabilityZone: "us-east-2b"
               tags:
                 Name: "vector-db-private-subnet-2"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -265,6 +289,8 @@ spec:
               availabilityZone: "us-east-2a"
               tags:
                 Name: "vector-db-database-subnet-1"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -298,6 +324,8 @@ spec:
               availabilityZone: "us-east-2b"
               tags:
                 Name: "vector-db-database-subnet-2"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -330,6 +358,8 @@ spec:
                 - "dummy-subnet-2"
               tags:
                 Name: "vector-db-subnet-group"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -357,6 +387,8 @@ spec:
                 matchControllerRef: true
               tags:
                 Name: "vector-db-public-rt"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -375,6 +407,8 @@ spec:
               destinationCidrBlock: "0.0.0.0/0"
               gatewayIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -402,6 +436,8 @@ spec:
                 matchControllerRef: true
               tags:
                 Name: "vector-db-database-rt"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -420,6 +456,8 @@ spec:
               destinationCidrBlock: "0.0.0.0/0"
               gatewayIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -447,6 +485,8 @@ spec:
                 matchControllerRef: true
               routeTableIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -473,6 +513,8 @@ spec:
                 matchControllerRef: true
               routeTableIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -499,6 +541,8 @@ spec:
                 matchControllerRef: true
               routeTableIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -525,6 +569,8 @@ spec:
                 matchControllerRef: true
               routeTableIdSelector:
                 matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -567,6 +613,8 @@ spec:
                 - "0.0.0.0/0"
               tags:
                 Name: "vector-db-aurora-sg"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -597,6 +645,8 @@ spec:
                 - "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
               tags:
                 Name: "vector-db-monitoring-role"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -617,6 +667,8 @@ spec:
                 value: "vector"
               tags:
                 Name: "vector-db-parameter-group"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -637,6 +689,8 @@ spec:
                 value: "vector"
               tags:
                 Name: "vector-db-cluster-parameter-group"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -652,6 +706,8 @@ spec:
               length: 16
               special: true
               overrideSpecial: "!#$%&*()-_=+[]{}<>:?"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.generatePassword"
@@ -691,6 +747,8 @@ spec:
               dbSubnetGroupName: "dummy-subnet-group"
               tags:
                 Name: "vector-db-cluster"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
@@ -761,6 +819,8 @@ spec:
                 maxCapacity: 16
               tags:
                 Name: "vector-db-instance"
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"

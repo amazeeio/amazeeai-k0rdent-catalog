@@ -1,3 +1,15 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: creds-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-crossplane-secret
+      key: creds
+---
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -61,6 +73,8 @@ spec:
               ttl:
                 enabled: true
                 attributeName: ttl
+            providerConfigRef:
+              name: creds-provider
         patches:
           - type: FromCompositeFieldPath
             fromFieldPath: "spec.location"
