@@ -2,7 +2,7 @@ apiVersion: k0rdent.mirantis.com/v1beta1
 kind: ServiceTemplate
 metadata:
   name: litellm-0.4.0
-  namespace: kcm-system
+  namespace: k0rdent
   annotations:
     helm.sh/resource-policy: keep
 spec:

@@ -1,0 +1,878 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: creds-provider
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-crossplane-secret
+      key: creds
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: vector-dbs.db.amazee.ai
+spec:
+  group: db.amazee.ai
+  names:
+    kind: VectorDB
+    plural: vector-dbs
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              location:
+                type: string
+                oneOf:
+                - pattern: '^eu-central-2$'
+                - pattern: '^eu-west-2$'
+                - pattern: '^eu-central-1$'
+                - pattern: '^us-east-1$'
+                - pattern: '^us-east-2$'
+                - pattern: '^ap-southeast-2$'
+                - pattern: '^ca-central-1$'
+                - pattern: '^af-south-1$'
+              engineVersion:
+                type: string
+                default: "16.6"
+              minCapacity:
+                type: number
+                default: 2
+              maxCapacity:
+                type: number
+                default: 16
+              allocatedStorage:
+                type: integer
+                default: 100
+              databaseName:
+                type: string
+                default: "vectordb"
+              masterUsername:
+                type: string
+                default: "postgres"
+              backupRetentionPeriod:
+                type: integer
+                default: 7
+              backupWindow:
+                type: string
+                default: "06:42-07:12"
+              maintenanceWindow:
+                type: string
+                default: "wed:04:35-wed:05:05"
+              deletionProtection:
+                type: boolean
+                default: true
+              generatePassword:
+                type: boolean
+                default: true
+            required:
+            - location
+    served: true
+    referenceable: true
+  claimNames:
+    kind: VectorDBClaim
+    plural: vector-db-claims
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: aurora-vector-db
+spec:
+  mode: Pipeline
+  pipeline:
+  - step: patch-and-transform
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      # VPC
+      - name: vpc
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: VPC
+          spec:
+            forProvider:
+              region: "us-east-2"
+              cidrBlock: "10.0.0.0/16"
+              enableDnsHostnames: true
+              enableDnsSupport: true
+              tags:
+                Name: "vector-db-vpc"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Internet Gateway
+      - name: internet-gateway
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: InternetGateway
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              tags:
+                Name: "vector-db-igw"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Public Subnet 1
+      - name: public-subnet-1
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.1.0/24"
+              availabilityZone: "us-east-2a"
+              mapPublicIpOnLaunch: true
+              tags:
+                Name: "vector-db-public-subnet-1"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
+
+      # Public Subnet 2
+      - name: public-subnet-2
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.2.0/24"
+              availabilityZone: "us-east-2b"
+              mapPublicIpOnLaunch: true
+              tags:
+                Name: "vector-db-public-subnet-2"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
+
+      # Private Subnet 1
+      - name: private-subnet-1
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.3.0/24"
+              availabilityZone: "us-east-2a"
+              tags:
+                Name: "vector-db-private-subnet-1"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
+
+      # Private Subnet 2
+      - name: private-subnet-2
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.4.0/24"
+              availabilityZone: "us-east-2b"
+              tags:
+                Name: "vector-db-private-subnet-2"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
+
+      # Database Subnet 1
+      - name: database-subnet-1
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.5.0/24"
+              availabilityZone: "us-east-2a"
+              tags:
+                Name: "vector-db-database-subnet-1"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2a"
+                eu-west-2: "eu-west-2a"
+                eu-central-1: "eu-central-1a"
+                us-east-1: "us-east-1a"
+                us-east-2: "us-east-2a"
+                ap-southeast-2: "ap-southeast-2a"
+                ca-central-1: "ca-central-1a"
+                af-south-1: "af-south-1a"
+
+      # Database Subnet 2
+      - name: database-subnet-2
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Subnet
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              cidrBlock: "10.0.6.0/24"
+              availabilityZone: "us-east-2b"
+              tags:
+                Name: "vector-db-database-subnet-2"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.availabilityZone"
+            transforms:
+            - type: map
+              map:
+                eu-central-2: "eu-central-2b"
+                eu-west-2: "eu-west-2b"
+                eu-central-1: "eu-central-1b"
+                us-east-1: "us-east-1b"
+                us-east-2: "us-east-2b"
+                ap-southeast-2: "ap-southeast-2b"
+                ca-central-1: "ca-central-1b"
+                af-south-1: "af-south-1b"
+
+      # Database Subnet Group
+      - name: database-subnet-group
+        base:
+          apiVersion: rds.aws.upbound.io/v1beta1
+          kind: SubnetGroup
+          spec:
+            forProvider:
+              region: "us-east-2"
+              subnetIds:
+                - "dummy-subnet-1"
+                - "dummy-subnet-2"
+              tags:
+                Name: "vector-db-subnet-group"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetIds[0]"
+            fromResources:
+            - name: database-subnet-1
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetIds[1]"
+            fromResources:
+            - name: database-subnet-2
+
+      # Public Route Table
+      - name: public-route-table
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTable
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              tags:
+                Name: "vector-db-public-rt"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Public Route (Internet Gateway)
+      - name: public-route
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Route
+          spec:
+            forProvider:
+              region: "us-east-2"
+              routeTableIdSelector:
+                matchControllerRef: true
+              destinationCidrBlock: "0.0.0.0/0"
+              gatewayIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: public-route-table
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.gatewayId"
+            fromResources:
+            - name: internet-gateway
+
+      # Database Route Table
+      - name: database-route-table
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTable
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              tags:
+                Name: "vector-db-database-rt"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Database Route (Internet Gateway)
+      - name: database-route
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: Route
+          spec:
+            forProvider:
+              region: "us-east-2"
+              routeTableIdSelector:
+                matchControllerRef: true
+              destinationCidrBlock: "0.0.0.0/0"
+              gatewayIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: database-route-table
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.gatewayId"
+            fromResources:
+            - name: internet-gateway
+
+      # Route Table Associations
+      - name: public-rt-assoc-1
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTableAssociation
+          spec:
+            forProvider:
+              region: "us-east-2"
+              subnetIdSelector:
+                matchControllerRef: true
+              routeTableIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetId"
+            fromResources:
+            - name: public-subnet-1
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: public-route-table
+
+      - name: public-rt-assoc-2
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTableAssociation
+          spec:
+            forProvider:
+              region: "us-east-2"
+              subnetIdSelector:
+                matchControllerRef: true
+              routeTableIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetId"
+            fromResources:
+            - name: public-subnet-2
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: public-route-table
+
+      - name: database-rt-assoc-1
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTableAssociation
+          spec:
+            forProvider:
+              region: "us-east-2"
+              subnetIdSelector:
+                matchControllerRef: true
+              routeTableIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetId"
+            fromResources:
+            - name: database-subnet-1
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: database-route-table
+
+      - name: database-rt-assoc-2
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: RouteTableAssociation
+          spec:
+            forProvider:
+              region: "us-east-2"
+              subnetIdSelector:
+                matchControllerRef: true
+              routeTableIdSelector:
+                matchControllerRef: true
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.subnetId"
+            fromResources:
+            - name: database-subnet-2
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.routeTableId"
+            fromResources:
+            - name: database-route-table
+
+      # Security Group for Aurora
+      - name: aurora-security-group
+        base:
+          apiVersion: vpc.aws.upbound.io/v1beta1
+          kind: SecurityGroup
+          spec:
+            forProvider:
+              region: "us-east-2"
+              vpcIdSelector:
+                matchControllerRef: true
+              description: "Security group for Aurora PostgreSQL cluster"
+              ingress:
+              - description: "PostgreSQL access"
+                fromPort: 5432
+                toPort: 5432
+                protocol: "tcp"
+                cidrBlocks:
+                - "0.0.0.0/0"
+              egress:
+              - description: "All outbound traffic"
+                fromPort: 0
+                toPort: 0
+                protocol: "-1"
+                cidrBlocks:
+                - "0.0.0.0/0"
+              tags:
+                Name: "vector-db-aurora-sg"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # IAM Role for RDS Monitoring
+      - name: rds-monitoring-role
+        base:
+          apiVersion: iam.aws.upbound.io/v1beta1
+          kind: Role
+          spec:
+            forProvider:
+              region: "us-east-2"
+              assumeRolePolicy: |
+                {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": "monitoring.rds.amazonaws.com"
+                      },
+                      "Action": "sts:AssumeRole"
+                    }
+                  ]
+                }
+              managedPolicyArns:
+                - "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+              tags:
+                Name: "vector-db-monitoring-role"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Parameter Group for vector extension
+      - name: parameter-group
+        base:
+          apiVersion: rds.aws.upbound.io/v1beta1
+          kind: ParameterGroup
+          spec:
+            forProvider:
+              region: "us-east-2"
+              family: "aurora-postgresql16"
+              description: "Parameter group for vector extension"
+              parameter:
+              - name: "shared_preload_libraries"
+                value: "vector"
+              tags:
+                Name: "vector-db-parameter-group"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Cluster Parameter Group for vector extension
+      - name: cluster-parameter-group
+        base:
+          apiVersion: rds.aws.upbound.io/v1beta1
+          kind: ClusterParameterGroup
+          spec:
+            forProvider:
+              region: "us-east-2"
+              family: "aurora-postgresql16"
+              description: "Cluster parameter group for vector extension"
+              parameter:
+              - name: "shared_preload_libraries"
+                value: "vector"
+              tags:
+                Name: "vector-db-cluster-parameter-group"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+
+      # Random password generator
+      - name: random-password
+        base:
+          apiVersion: random.upbound.io/v1beta1
+          kind: Password
+          spec:
+            forProvider:
+              length: 16
+              special: true
+              overrideSpecial: "!#$%&*()-_=+[]{}<>:?"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.generatePassword"
+            toFieldPath: "spec.forProvider.length"
+            transforms:
+            - type: map
+              map:
+                false: 0
+                true: 16
+
+      # Aurora PostgreSQL Cluster
+      - name: aurora-cluster
+        base:
+          apiVersion: rds.aws.upbound.io/v1beta1
+          kind: Cluster
+          spec:
+            forProvider:
+              region: "us-east-2"
+              engine: "aurora-postgresql"
+              engineVersion: "16.6"
+              masterUsername: "postgres"
+              masterPassword: "dummy-password"
+              skipFinalSnapshot: false
+              deletionProtection: true
+              storageEncrypted: true
+              copyTagsToSnapshot: true
+              backupRetentionPeriod: 7
+              preferredBackupWindow: "06:42-07:12"
+              preferredMaintenanceWindow: "wed:04:35-wed:05:05"
+              monitoringInterval: 60
+              monitoringRoleArn: "dummy-monitoring-role"
+              performanceInsightsEnabled: true
+              performanceInsightsRetentionPeriod: 7
+              dbClusterParameterGroupName: "dummy-cluster-parameter-group"
+              vpcSecurityGroupIds:
+                - "dummy-sg"
+              dbSubnetGroupName: "dummy-subnet-group"
+              tags:
+                Name: "vector-db-cluster"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.engineVersion"
+            toFieldPath: "spec.forProvider.engineVersion"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.masterUsername"
+            toFieldPath: "spec.forProvider.masterUsername"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.backupRetentionPeriod"
+            toFieldPath: "spec.forProvider.backupRetentionPeriod"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.backupWindow"
+            toFieldPath: "spec.forProvider.preferredBackupWindow"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.maintenanceWindow"
+            toFieldPath: "spec.forProvider.preferredMaintenanceWindow"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.deletionProtection"
+            toFieldPath: "spec.forProvider.deletionProtection"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.vpcSecurityGroupIds[0]"
+            fromResources:
+            - name: aurora-security-group
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.dbSubnetGroupName"
+            fromResources:
+            - name: database-subnet-group
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.monitoringRoleArn"
+            fromResources:
+            - name: rds-monitoring-role
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.dbClusterParameterGroupName"
+            fromResources:
+            - name: cluster-parameter-group
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.result"
+            toFieldPath: "spec.forProvider.masterPassword"
+            fromResources:
+            - name: random-password
+
+      # Aurora Serverless v2 Instance
+      - name: aurora-instance
+        base:
+          apiVersion: rds.aws.upbound.io/v1beta1
+          kind: Instance
+          spec:
+            forProvider:
+              region: "us-east-2"
+              engine: "aurora-postgresql"
+              instanceClass: "db.serverless"
+              clusterIdentifier: "dummy-cluster"
+              autoMinorVersionUpgrade: true
+              dbParameterGroupName: "dummy-parameter-group"
+              monitoringInterval: 60
+              monitoringRoleArn: "dummy-monitoring-role"
+              performanceInsightsEnabled: true
+              performanceInsightsRetentionPeriod: 7
+              serverlessV2ScalingConfiguration:
+                minCapacity: 2
+                maxCapacity: 16
+              tags:
+                Name: "vector-db-instance"
+            providerConfigRef:
+              name: creds-provider
+        patches:
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.location"
+            toFieldPath: "spec.forProvider.region"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.minCapacity"
+            toFieldPath: "spec.forProvider.serverlessV2ScalingConfiguration.minCapacity"
+          - type: FromCompositeFieldPath
+            fromFieldPath: "spec.maxCapacity"
+            toFieldPath: "spec.forProvider.serverlessV2ScalingConfiguration.maxCapacity"
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.clusterIdentifier"
+            fromResources:
+            - name: aurora-cluster
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.dbParameterGroupName"
+            fromResources:
+            - name: parameter-group
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.id"
+            toFieldPath: "spec.forProvider.monitoringRoleArn"
+            fromResources:
+            - name: rds-monitoring-role
+
+      # Secret for database credentials
+      - name: db-secret
+        base:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: "vector-db-secret"
+          type: Opaque
+          stringData:
+            username: "postgres"
+            password: "dummy-password"
+            endpoint: "dummy-endpoint"
+            port: "5432"
+            database: "vectordb"
+        patches:
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.endpoint"
+            toFieldPath: "stringData.endpoint"
+            fromResources:
+            - name: aurora-cluster
+          - type: ToCompositeFieldPath
+            fromFieldPath: "status.atProvider.result"
+            toFieldPath: "stringData.password"
+            fromResources:
+            - name: random-password
+
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDB

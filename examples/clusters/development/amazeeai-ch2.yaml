@@ -37,7 +37,6 @@ spec:
         values: |
           crds:
             enabled: true
-          foo: bar
       - name: litellm
         namespace: litellm
         template: litellm-0.4.0
@@ -48,7 +47,7 @@ spec:
               AWS_ACCESS_KEY_ID: "fillme"
               AWS_SECRET_ACCESS_KEY: "fillme"
               AWS_REGION: eu-central-2
-              AWS_REGION_NAME: "eu-central-2" # There is a chance this will conflict with AWS_REGION
+              # AWS_REGION_NAME: "eu-central-2" # Only include if you're logging to DDB
               UI_USERNAME: admin
               UI_PASSWORD: fillme
             image:
@@ -57,9 +56,11 @@ spec:
             proxy_config:
               litellm_settings:
                 callbacks: ["prometheus"]
+                # success_callback: ["dynamodb"]
+                # dynamodb_table_name: "litellm-logging-table"
                 turn_off_message_logging: true
-            general_settings:
-              store_prompts_in_spend_logs: false
+              general_settings:
+                store_prompts_in_spend_logs: false
 
           prometheus:
             server:
@@ -81,4 +82,4 @@ spec:
           grafana:
             enabled: false
 
-  template: aws-standalone-cp-0-2-1
+  template: aws-standalone-cp-1-0-10

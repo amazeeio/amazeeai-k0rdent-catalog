@@ -1,0 +1,25 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ClusterDeployment
+metadata:
+  name: crossplane-resources
+  namespace: k0rdent
+spec:
+  config:
+    controlPlane:
+      instanceType: t3.medium
+      imageLookup:
+        org: "084269151793" # Verify this if changing the region
+    region: eu-central-2
+    worker:
+      instanceType: t3.medium
+      rootVolumeSize: 60
+      imageLookup:
+        org: "084269151793"
+  credential: aws-cluster-identity-cred
+  serviceSpec:
+    priority: 100
+    services:
+      - name: crossplane
+        namespace: crossplane-system
+        template: crossplane-0-1-0
+        values: |
