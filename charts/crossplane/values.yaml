@@ -29,16 +29,16 @@ packageCache:
 # Function packages to install
 function:
   packages:
-    - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform"
+    - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
 
 # Provider packages to install
 provider:
   packages:
-    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-dynamodb"
-    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-vpc"
-    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds"
-    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam"
-    - "xpkg.crossplane.io/crossplane-contrib/provider-random"
+    - "xpkg.crossplane.io/crossplane-contrib/provider-family-aws:v1.23.0"
+    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-dynamodb:v1.23.0"
+    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-vpc:v1.23.0"
+    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v1.23.0"
+    - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v1.23.0"
 
 # Feature flags - only stable beta features enabled
 args:

@@ -1,8 +1,8 @@
-apiVersion: k0rdent.mirantis.com/v1alpha1
+apiVersion: k0rdent.mirantis.com/v1beta1
 kind: ServiceTemplate
 metadata:
   name: crossplane-0.1.0
-  namespace: kcm-system
+  namespace: k0rdent
   annotations:
     helm.sh/resource-policy: keep
 spec:

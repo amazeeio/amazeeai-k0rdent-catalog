@@ -1,7 +1,7 @@
 apiVersion: db.amazee.ai/v1alpha1
 kind: VectorDBClaim
 metadata:
-  name: litellm-vector-db
+  name: litellm-dev-vector-db-ch2
   namespace: litellm
 spec:
   location: "eu-central-2"
