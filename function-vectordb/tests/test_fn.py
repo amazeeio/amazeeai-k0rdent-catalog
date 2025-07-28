@@ -20,6 +20,7 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
         When the function runs
         Then it should create all required infrastructure resources
         """
+
         @dataclasses.dataclass
         class TestCase:
             reason: str
@@ -45,7 +46,10 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
                         ),
                     ),
                 ),
-                expected_resource_count=25,  # VPC, IGW, 6 subnets, 2 route tables, 2 routes, 4 route table associations, SG, IAM role, 2 parameter groups, password, cluster, instance, secret
+                expected_resource_count=25,
+                # VPC, IGW, 6 subnets, 2 route tables, 2 routes,
+                # 4 route table associations, SG, IAM role, 2 parameter groups,
+                # password, cluster, instance, secret
             ),
         ]
 
@@ -58,7 +62,8 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(
                 len(got.desired.resources),
                 case.expected_resource_count,
-                f"Expected {case.expected_resource_count} resources, got {len(got.desired.resources)}",
+                f"Expected {case.expected_resource_count} resources, "
+                f"got {len(got.desired.resources)}",
             )
 
             # Check that TTL is set
@@ -108,7 +113,9 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cluster_spec["masterUsername"], "admin")
         self.assertEqual(cluster_spec["backupRetentionPeriod"], 14)
         self.assertEqual(cluster_spec["preferredBackupWindow"], "03:00-03:30")
-        self.assertEqual(cluster_spec["preferredMaintenanceWindow"], "sun:02:00-sun:03:00")
+        self.assertEqual(
+            cluster_spec["preferredMaintenanceWindow"], "sun:02:00-sun:03:00"
+        )
         self.assertEqual(cluster_spec["deletionProtection"], False)
 
         aurora_instance = got.desired.resources["aurora-instance"]
@@ -170,15 +177,15 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
 
                 self.assertEqual(
                     public_subnet.resource["spec"]["forProvider"]["availabilityZone"],
-                    expected_az
+                    expected_az,
                 )
                 self.assertEqual(
                     private_subnet.resource["spec"]["forProvider"]["availabilityZone"],
-                    expected_az
+                    expected_az,
                 )
                 self.assertEqual(
                     database_subnet.resource["spec"]["forProvider"]["availabilityZone"],
-                    expected_az
+                    expected_az,
                 )
 
     async def test_default_values(self) -> None:
@@ -215,7 +222,9 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(cluster_spec["masterUsername"], "postgres")
         self.assertEqual(cluster_spec["backupRetentionPeriod"], 7)
         self.assertEqual(cluster_spec["preferredBackupWindow"], "06:42-07:12")
-        self.assertEqual(cluster_spec["preferredMaintenanceWindow"], "wed:04:35-wed:05:05")
+        self.assertEqual(
+            cluster_spec["preferredMaintenanceWindow"], "wed:04:35-wed:05:05"
+        )
         self.assertEqual(cluster_spec["deletionProtection"], True)
 
         aurora_instance = got.desired.resources["aurora-instance"]
@@ -259,27 +268,46 @@ class TestFunctionRunner(unittest.IsolatedAsyncioTestCase):
         got = await runner.RunFunction(req, None)
 
         # Check that all resources have proper metadata and provider config
-        for resource_name, resource_obj in got.desired.resources.items():
+        for _resource_name, resource_obj in got.desired.resources.items():
             # All resources should have annotations
             self.assertIn("metadata", resource_obj.resource)
             self.assertIn("annotations", resource_obj.resource["metadata"])
-            self.assertIn("crossplane.io/external-name", resource_obj.resource["metadata"]["annotations"])
+            self.assertIn(
+                "crossplane.io/external-name",
+                resource_obj.resource["metadata"]["annotations"],
+            )
 
             # All AWS resources should have provider config
             if resource_obj.resource["apiVersion"] != "v1":  # Skip Kubernetes Secret
                 self.assertIn("spec", resource_obj.resource)
                 self.assertIn("providerConfigRef", resource_obj.resource["spec"])
-                self.assertEqual(resource_obj.resource["spec"]["providerConfigRef"]["name"], "creds-provider")
+                self.assertEqual(
+                    resource_obj.resource["spec"]["providerConfigRef"]["name"],
+                    "creds-provider",
+                )
 
         # Check specific resource types
-        self.assertEqual(got.desired.resources["vpc"].resource["apiVersion"], "vpc.aws.upbound.io/v1beta1")
+        self.assertEqual(
+            got.desired.resources["vpc"].resource["apiVersion"],
+            "vpc.aws.upbound.io/v1beta1",
+        )
         self.assertEqual(got.desired.resources["vpc"].resource["kind"], "VPC")
 
-        self.assertEqual(got.desired.resources["aurora-cluster"].resource["apiVersion"], "rds.aws.upbound.io/v1beta1")
-        self.assertEqual(got.desired.resources["aurora-cluster"].resource["kind"], "Cluster")
+        self.assertEqual(
+            got.desired.resources["aurora-cluster"].resource["apiVersion"],
+            "rds.aws.upbound.io/v1beta1",
+        )
+        self.assertEqual(
+            got.desired.resources["aurora-cluster"].resource["kind"], "Cluster"
+        )
 
-        self.assertEqual(got.desired.resources["aurora-instance"].resource["apiVersion"], "rds.aws.upbound.io/v1beta1")
-        self.assertEqual(got.desired.resources["aurora-instance"].resource["kind"], "Instance")
+        self.assertEqual(
+            got.desired.resources["aurora-instance"].resource["apiVersion"],
+            "rds.aws.upbound.io/v1beta1",
+        )
+        self.assertEqual(
+            got.desired.resources["aurora-instance"].resource["kind"], "Instance"
+        )
 
 
 if __name__ == "__main__":
