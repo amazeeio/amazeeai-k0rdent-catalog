@@ -1,2 +1,14 @@
 .cursor/
 aws-cred.txt
+
+# Python Function
+**/dist/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.venv/
+**/.venv-default/
+**/.venv-test/
+**/.venv-default-test/
+**/.venv-test-test/
+**/.venv-default-test-test/
+**/__pycache__/
