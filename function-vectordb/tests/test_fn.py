@@ -3,9 +3,6 @@ import unittest
 
 from crossplane.function import logging, resource
 from crossplane.function.proto.v1 import run_function_pb2 as fnv1
-from google.protobuf import duration_pb2 as durationpb
-from google.protobuf import json_format
-from google.protobuf import struct_pb2 as structpb
 
 from function.fn import FunctionRunner
 
