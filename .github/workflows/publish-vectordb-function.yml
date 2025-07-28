@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - crossplane-resources
       - release-*
     paths:
       - 'function-vectordb/**'
