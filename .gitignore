@@ -7,8 +7,7 @@ aws-cred.txt
 **/.ruff_cache/
 **/.venv/
 **/.venv-default/
-**/.venv-test/
-**/.venv-default-test/
-**/.venv-test-test/
-**/.venv-default-test-test/
 **/__pycache__/
+
+# Crossplane Resources
+**/*.xpkg
