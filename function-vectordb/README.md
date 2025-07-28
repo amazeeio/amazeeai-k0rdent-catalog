@@ -32,6 +32,28 @@ The function accepts the following configuration parameters in the composite res
 | `deletionProtection` | `true` | Enable deletion protection |
 | `generatePassword` | `true` | Generate random master password |
 
+## Development
+
+### Code Quality
+
+```shell
+# Format and lint code
+hatch fmt
+
+# Run type checking
+hatch run typecheck
+```
+
+### Building
+
+```shell
+# Build the runtime image
+docker build . --tag=runtime
+
+# Build the function package
+crossplane xpkg build -f package --embed-runtime-image=runtime
+```
+
 ## Testing and Verification
 
 ### Prerequisites
@@ -59,27 +81,6 @@ crossplane xpkg build -f package --embed-runtime-image=runtime
 
 # Test rendering with the example XR
 crossplane render example/xr.yaml example/composition.yaml example/functions.yaml
-
-## Development
-
-### Code Quality
-
-```shell
-# Format and lint code
-hatch fmt
-
-# Run type checking
-hatch run typecheck
-```
-
-### Building
-
-```shell
-# Build the runtime image
-docker build . --tag=runtime
-
-# Build the function package
-crossplane xpkg build -f package --embed-runtime-image=runtime
 ```
 
 ### Test with Example Configuration
