@@ -83,11 +83,9 @@ spec:
             enabled: false
       - name: crossplane
         namespace: crossplane
-        template: crossplane-0.1.1
+        template: crossplane-0.1.2
         values: |
           crossplane:
-            function:
-              packages:
-                - "ghcr.io/amazeeio/function-vectordb:0.0.dev1"
+            enabled: true
 
   template: aws-standalone-cp-1-0-10

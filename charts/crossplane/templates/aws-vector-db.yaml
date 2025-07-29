@@ -1,3 +1,4 @@
+# 1. Composite Resource Definition (XRD) - must be created first
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
@@ -66,3 +67,129 @@ spec:
   claimNames:
     kind: VectorDBClaim
     plural: vectordb-claims
+
+---
+# 2. AWS Credentials Secret - must be created before provider config
+# Note: Update this secret with real AWS credentials after deployment
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-creds
+  namespace: crossplane-system
+  annotations:
+    description: "Update this secret with real AWS credentials after deployment"
+type: Opaque
+stringData:
+  credentials: |
+    [default]
+    aws_access_key_id = "changeme"
+    aws_secret_access_key = "changeme"
+
+---
+# 3. Terraform Provider Configuration - must be created after secret
+apiVersion: terraform.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: aws-provider-config
+spec:
+  configuration:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-creds
+      key: credentials
+  requirements:
+    provider:
+      source: hashicorp/aws
+      version: "~> 5.0"
+
+---
+# 4. Composition - must be created after XRD, secret, and provider config
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: aws-vectordb
+  labels:
+    provider: aws
+    vpc: "true"
+spec:
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDB
+  writeConnectionSecretsToNamespace: crossplane-system
+  mode: Pipeline
+  pipeline:
+  - step: create-vectordb
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: aws-vectordb
+        base:
+          apiVersion: terraform.crossplane.io/v1alpha1
+          kind: Workspace
+          spec:
+            forProvider:
+              source: Remote
+              module: "github.com/amazeeai-k0rdent-catalog/terraform/vector-db"
+              version: "main"
+              providerConfigRef:
+                name: aws-provider-config
+              variables:
+                region: "eu-central-1"
+                environment_suffix: "prod"
+                postgres_cluster:
+                  name: "vectordb"
+                  min_capacity: 2
+                  max_capacity: 16
+                  backup_window: "06:42-07:12"
+                  maintenance_window: "wed:04:35-wed:05:05"
+                tags:
+                  Environment: "production"
+                  ManagedBy: "crossplane"
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.location
+          toFieldPath: spec.forProvider.variables.region
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.minCapacity
+          toFieldPath: spec.forProvider.variables.postgres_cluster.min_capacity
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.maxCapacity
+          toFieldPath: spec.forProvider.variables.postgres_cluster.max_capacity
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.databaseName
+          toFieldPath: spec.forProvider.variables.postgres_cluster.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.backupWindow
+          toFieldPath: spec.forProvider.variables.postgres_cluster.backup_window
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.maintenanceWindow
+          toFieldPath: spec.forProvider.variables.postgres_cluster.maintenance_window
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.forProvider.variables.environment_suffix
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.annotations
+          toFieldPath: metadata.annotations
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels
+          toFieldPath: metadata.labels
+        connectionDetails:
+        - name: cluster_endpoint
+          fromConnectionSecretKey: cluster_endpoint
+        - name: cluster_reader_endpoint
+          fromConnectionSecretKey: cluster_reader_endpoint
+        - name: cluster_id
+          fromConnectionSecretKey: cluster_id
+        - name: master_password
+          fromConnectionSecretKey: master_password
+        - name: vpc_id
+          fromConnectionSecretKey: vpc_id
+        - name: database_subnet_group_name
+          fromConnectionSecretKey: database_subnet_group_name
