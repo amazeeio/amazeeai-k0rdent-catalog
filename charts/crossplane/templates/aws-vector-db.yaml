@@ -1,8 +1,41 @@
+# 0. Wait for Crossplane to be ready before creating custom resources
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wait-for-crossplane
+  namespace: crossplane-system
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: crossplane
+      containers:
+      - name: wait
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Crossplane to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/crossplane -n crossplane-system
+          kubectl wait --for=condition=available --timeout=300s deployment/crossplane-rbac-manager -n crossplane-system
+          echo "Crossplane is ready!"
+      restartPolicy: Never
+  backoffLimit: 3
+
+---
 # 1. Composite Resource Definition (XRD) - must be created first
 apiVersion: apiextensions.crossplane.io/v1
 kind: CompositeResourceDefinition
 metadata:
   name: vectordbs.db.amazee.ai
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "1"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   group: db.amazee.ai
   names:
@@ -78,6 +111,9 @@ metadata:
   namespace: crossplane-system
   annotations:
     description: "Update this secret with real AWS credentials after deployment"
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "2"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 type: Opaque
 stringData:
   credentials: |
@@ -91,6 +127,10 @@ apiVersion: terraform.crossplane.io/v1alpha1
 kind: ProviderConfig
 metadata:
   name: aws-provider-config
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "3"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   configuration:
     source: Secret
@@ -112,6 +152,10 @@ metadata:
   labels:
     provider: aws
     vpc: "true"
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "4"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 spec:
   compositeTypeRef:
     apiVersion: db.amazee.ai/v1alpha1
