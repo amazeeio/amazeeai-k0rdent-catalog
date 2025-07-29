@@ -37,7 +37,7 @@ env:
   # ghcr.io but this'll be pulled from xpkg.crossplane.io.
   XPKG: ghcr.io/${{ github.repository_owner }}/function-vectordb
 
-  # The package version to push. The default is 0.0.0-gitsha.
+  # The package version to push. We'll read it from hatch if available, otherwise use git-based versioning.
   XPKG_VERSION: ${{ inputs.version }}
 
 jobs:
@@ -152,16 +152,24 @@ jobs:
       - name: Setup the Crossplane CLI
         run: "curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | sh"
 
+      - name: Setup Hatch
+        run: pipx install hatch==${{ env.HATCH_VERSION }}
+
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username ${{ github.actor }} --password-stdin
 
       # If a version wasn't explicitly passed as a workflow_dispatch input we
-      # default to version v0.0.0-<git-commit-date>-<git-short-sha>, for example
-      # v0.0.0-20231101115142-1091066df799. This is a simple implementation of
-      # Go's pseudo-versions: https://go.dev/ref/mod#pseudo-versions.
+      # try to read the version from hatch, falling back to git-based versioning if that fails.
       - name: Set Default Multi-Platform Package Version
         if: env.XPKG_VERSION == ''
-        run: echo "XPKG_VERSION=v0.0.0-$(date -d@$(git show -s --format=%ct) +%Y%m%d%H%M%S)-$(git rev-parse --short=12 HEAD)" >> $GITHUB_ENV
+        run: |
+          cd function-vectordb
+          HATCH_VERSION=$(hatch version)
+          if [ $? -eq 0 ] && [ -n "$HATCH_VERSION" ]; then
+            echo "XPKG_VERSION=$HATCH_VERSION" >> $GITHUB_ENV
+          else
+            echo "XPKG_VERSION=v0.0.0-$(date -d@$(git show -s --format=%ct) +%Y%m%d%H%M%S)-$(git rev-parse --short=12 HEAD)" >> $GITHUB_ENV
+          fi
 
       - name: Push Multi-Platform Package to GitHub Container Registry
         run: "./crossplane --verbose xpkg push --package-files $(echo *.xpkg|tr ' ' ,) ${{ env.XPKG }}:${{ env.XPKG_VERSION }}"

@@ -1,5 +1,6 @@
 .cursor/
 aws-cred.txt
+aws*.txt
 
 # Python Function
 **/dist/

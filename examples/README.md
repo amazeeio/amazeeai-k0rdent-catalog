@@ -2,6 +2,11 @@
 This guide assumes a base level of experience with helm, kubernetes, and k0rdent. More information on each can be found in their respective documentation. Included you will find templates and charts required for a fully functional amazee.ai LLM credential provisioning system. The examples are based on a deployment to AWS, but the system will run on any infrastructure.
 ## Setting up
 Begin by setting up your k0rdent management system. You can follow the [quickstart guide](https://docs.k0rdent-enterprise.io/latest/quickstarts/) and then use the `clusterctl move --to-kubeconfig=target-kubeconfig.yaml` command to use the included mothership config, or use your own management cluster.
+
+Before you can manage crossplane resources, you will need the namespace
+```bash
+kubectl create namespace crossplane-system
+```
 ## Necessary secrets
 AWS credentials are needed for two parts of the system. K0rdent requires credentials to manage services, and Crossplane requires credentials for infrastructure management.
 ### K0rdent
@@ -9,6 +14,7 @@ The `aws-cluster-identity.yaml` file assumes a secret named `aws-cluster-identit
 ```bash
 kubectl create secret generic aws-cluster-identity-secret -n k0rdent --from-file=creds=./aws-creds.txt
 ```
+Or, you can use the `aws-cluster-secret.yaml` to apply a version which has all the correct properties set.
 ### Crossplane
 Some of the resources managed by these templates are created with crossplane, which requires different permissions to k0rdent. You will need the following permissions:
 ```json
@@ -37,6 +43,7 @@ This sets up the necessary helm repository to pull dependent charts.
 Next, configure service templates for amazee.ai and LiteLLM
 ```bash
 kubectl apply -f serviceTemplates/litellm/litellm-serviceTemplate.yaml
+kubectl apply -f serviceTemplates/crossplane/crossplane-serviceTemplate.yaml
 kubectl apply -f serviceTemplates/amazee-ai/amazee-ai-serviceTemplate.yaml
 ```
 You can verify the status of the service templates with

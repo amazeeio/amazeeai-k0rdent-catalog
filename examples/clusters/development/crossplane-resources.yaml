@@ -8,18 +8,24 @@ spec:
     controlPlane:
       instanceType: t3.medium
       imageLookup:
-        org: "084269151793" # Verify this if changing the region
-    region: eu-central-2
+        org: "137112412989" # Verify this if changing the region
+    region: eu-west-1 # Using ireland for now
     worker:
       instanceType: t3.medium
       rootVolumeSize: 60
       imageLookup:
-        org: "084269151793"
+        org: "137112412989"
   credential: aws-cluster-identity-cred
   serviceSpec:
     priority: 100
     services:
       - name: crossplane
         namespace: crossplane-system
-        template: crossplane-0-1-0
+        template: crossplane-0.1.1
         values: |
+          function:
+            packages:
+              - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
+              - "xpkg.crossplane.io/amazeeai-k0rdent-catalog/function-vectordb:v0.0.dev1"
+
+  template: aws-standalone-cp-1-0-10
