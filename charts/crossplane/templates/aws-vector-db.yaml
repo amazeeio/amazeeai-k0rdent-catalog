@@ -157,7 +157,7 @@ spec:
               name: aws-provider-config
             forProvider:
               source: Remote
-              module: "github.com/amazeeio/amazeeai-k0rdent-catalog//terraform/vector-db?ref=crossplane-terraform"
+              module: "github.com/amazeeio/amazeeai-k0rdent-catalog//terraform/vector-db?ref=main"
               vars:
                 - key: region
                   value: "eu-central-1"

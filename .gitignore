@@ -1,14 +1,1 @@
 .cursor/
-aws-cred.txt
-aws*.txt
-
-# Python Function
-**/dist/
-**/.pytest_cache/
-**/.ruff_cache/
-**/.venv/
-**/.venv-default/
-**/__pycache__/
-
-# Crossplane Resources
-**/*.xpkg
