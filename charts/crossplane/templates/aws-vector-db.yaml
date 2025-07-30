@@ -1,4 +1,4 @@
-# 0. Wait for Crossplane to be ready before creating custom resources
+# 0. Wait for Crossplane and Terraform provider to be ready before creating custom resources
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -7,7 +7,7 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "0"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   template:
     spec:
@@ -23,6 +23,11 @@ spec:
           kubectl wait --for=condition=available --timeout=300s deployment/crossplane -n crossplane-system
           kubectl wait --for=condition=available --timeout=300s deployment/crossplane-rbac-manager -n crossplane-system
           echo "Crossplane is ready!"
+
+          echo "Waiting for Terraform provider CRDs to be available..."
+          kubectl wait --for=condition=established --timeout=300s crd/providerconfigs.terraform.crossplane.io
+          kubectl wait --for=condition=established --timeout=300s crd/workspaces.terraform.crossplane.io
+          echo "Terraform provider CRDs are ready!"
       restartPolicy: Never
   backoffLimit: 3
 
@@ -35,7 +40,7 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "1"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   group: db.amazee.ai
   names:
@@ -113,7 +118,7 @@ metadata:
     description: "Update this secret with real AWS credentials after deployment"
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "2"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
 type: Opaque
 stringData:
   credentials: |
@@ -130,7 +135,7 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "3"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   configuration:
     source: Secret
@@ -155,7 +160,7 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-weight: "4"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
 spec:
   compositeTypeRef:
     apiVersion: db.amazee.ai/v1alpha1
