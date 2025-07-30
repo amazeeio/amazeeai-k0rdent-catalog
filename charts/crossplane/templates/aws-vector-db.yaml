@@ -25,8 +25,8 @@ spec:
           echo "Crossplane is ready!"
 
           echo "Waiting for Terraform provider CRDs to be available..."
-          kubectl wait --for=condition=established --timeout=300s crd/providerconfigs.terraform.crossplane.io
-          kubectl wait --for=condition=established --timeout=300s crd/workspaces.terraform.crossplane.io
+          kubectl wait --for=condition=established --timeout=300s crd/providerconfigs.tf.upbound.io
+          kubectl wait --for=condition=established --timeout=300s crd/workspaces.tf.upbound.io
           echo "Terraform provider CRDs are ready!"
       restartPolicy: Never
   backoffLimit: 3
@@ -128,7 +128,7 @@ stringData:
 
 ---
 # 3. Terraform Provider Configuration - must be created after secret
-apiVersion: terraform.crossplane.io/v1alpha1
+apiVersion: tf.upbound.io/v1beta1
 kind: ProviderConfig
 metadata:
   name: aws-provider-config
@@ -177,7 +177,7 @@ spec:
       resources:
       - name: aws-vectordb
         base:
-          apiVersion: terraform.crossplane.io/v1alpha1
+          apiVersion: tf.upbound.io/v1beta1
           kind: Workspace
           spec:
             forProvider:
