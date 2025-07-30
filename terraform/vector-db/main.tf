@@ -57,13 +57,13 @@ module "aurora" {
   }
 
   engine         = "aurora-postgresql"
-  engine_version = "16.6"
+  engine_version = var.engine_version
   engine_mode    = "provisioned"
 
   availability_zones = slice(data.aws_availability_zones.available.names, 0, 3)
 
   storage_encrypted   = true
-  master_username     = "postgres"
+  master_username     = var.master_username
   master_password     = random_password.master_password.result
 
   manage_master_user_password          = false
@@ -78,7 +78,7 @@ module "aurora" {
     }
   }
 
-  name = var.postgres_cluster.name
+  name = var.postgres_cluster_name
 
   instances = {
     instance1 = {
@@ -92,14 +92,14 @@ module "aurora" {
   }
 
   serverlessv2_scaling_configuration = {
-    min_capacity = var.postgres_cluster.min_capacity
-    max_capacity = var.postgres_cluster.max_capacity
+    min_capacity = var.postgres_cluster_min_capacity
+    max_capacity = var.postgres_cluster_max_capacity
   }
 
-  preferred_backup_window      = var.postgres_cluster.backup_window
-  preferred_maintenance_window = var.postgres_cluster.maintenance_window
+  preferred_backup_window      = var.postgres_cluster_backup_window
+  preferred_maintenance_window = var.postgres_cluster_maintenance_window
 
-  backup_retention_period = 7
+  backup_retention_period = var.backup_retention_period
 
   monitoring_interval    = 60
   create_monitoring_role = true
@@ -113,11 +113,13 @@ module "aurora" {
   create_db_parameter_group         = false
 
   copy_tags_to_snapshot               = true
-  deletion_protection                 = true
+  deletion_protection                 = var.deletion_protection
   iam_database_authentication_enabled = false
   network_type                        = "IPV4"
   enable_http_endpoint                = false
   auto_minor_version_upgrade          = true
+  skip_final_snapshot                 = false
+  final_snapshot_identifier           = "vectordb-final-snapshot"
 
   tags = var.tags
 }

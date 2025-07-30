@@ -58,6 +58,9 @@ spec:
               location:
                 type: string
                 description: "AWS region for the vector database"
+              envSuffix:
+                type: string
+                description: "Environment suffix for the vector database"
               engineVersion:
                 type: string
                 default: "16.6"
@@ -70,10 +73,6 @@ spec:
                 type: number
                 default: 16
                 description: "Maximum ACU for Serverless v2"
-              databaseName:
-                type: string
-                default: "vectordb"
-                description: "Name of the database"
               masterUsername:
                 type: string
                 default: "postgres"
@@ -94,10 +93,6 @@ spec:
                 type: boolean
                 default: true
                 description: "Enable deletion protection"
-              generatePassword:
-                type: boolean
-                default: true
-                description: "Generate random master password"
             required:
             - location
     served: true
@@ -109,23 +104,23 @@ spec:
 ---
 # 2. AWS Credentials Secret - must be created before provider config
 # Note: Update this secret with real AWS credentials after deployment
-apiVersion: v1
-kind: Secret
-metadata:
-  name: aws-creds
-  namespace: crossplane-system
-  annotations:
-    description: "Update this secret with real AWS credentials after deployment"
-    helm.sh/hook: post-install,post-upgrade
-    helm.sh/hook-weight: "2"
-    helm.sh/hook-delete-policy: hook-succeeded
-type: Opaque
-stringData:
-  credentials: |
-    [default]
-    aws_access_key_id = "changeme"
-    aws_secret_access_key = "changeme"
-
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: aws-creds
+#   namespace: crossplane-system
+#   annotations:
+#     description: "Update this secret with real AWS credentials after deployment"
+#     helm.sh/hook: post-install,post-upgrade
+#     helm.sh/hook-weight: "2"
+#     helm.sh/hook-delete-policy: hook-succeeded
+# type: Opaque
+# stringData:
+#   credentials: |
+#     [default]
+#     aws_access_key_id = "changeme"
+#     aws_secret_access_key = "changeme"
+#
 ---
 # 3. Terraform Provider Configuration - must be created after secret
 apiVersion: tf.upbound.io/v1beta1
@@ -167,7 +162,7 @@ spec:
   pipeline:
   - step: create-vectordb
     functionRef:
-      name: function-patch-and-transform
+      name: crossplane-contrib-function-patch-and-transform
     input:
       apiVersion: pt.fn.crossplane.io/v1beta1
       kind: Resources
@@ -177,46 +172,67 @@ spec:
           apiVersion: tf.upbound.io/v1beta1
           kind: Workspace
           spec:
+            providerConfigRef:
+              name: aws-provider-config
             forProvider:
               source: Remote
-              module: "github.com/amazeeai-k0rdent-catalog//terraform/vector-db"
-              version: "main"
-              providerConfigRef:
-                name: aws-provider-config
-              variables:
-                region: "eu-central-1"
-                environment_suffix: "prod"
-                postgres_cluster:
-                  name: "vectordb"
-                  min_capacity: 2
-                  max_capacity: 16
-                  backup_window: "06:42-07:12"
-                  maintenance_window: "wed:04:35-wed:05:05"
-                tags:
-                  Environment: "production"
-                  ManagedBy: "crossplane"
+              module: "github.com/amazeeio/amazeeai-k0rdent-catalog//terraform/vector-db?ref=crossplane-terraform"
+              vars:
+                - key: region
+                  value: "eu-central-1"
+                - key: environment_suffix
+                  value: "prod"
+                - key: postgres_cluster_name
+                  value: "vectordb"
+                - key: postgres_cluster_min_capacity
+                  value: "2"
+                - key: postgres_cluster_max_capacity
+                  value: "16"
+                - key: postgres_cluster_backup_window
+                  value: "06:42-07:12"
+                - key: postgres_cluster_maintenance_window
+                  value: "wed:04:35-wed:05:05"
+                - key: postgres_cluster_backup_retention_period
+                  value: "7"
+                - key: postgres_cluster_deletion_protection
+                  value: "true"
+                - key: postgres_cluster_engine_version
+                  value: "16.6"
+                - key: postgres_cluster_master_username
+                  value: "postgres"
+                - key: tags
+                  value: '{"Environment":"production","ManagedBy":"crossplane"}'
         patches:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.location
-          toFieldPath: spec.forProvider.variables.region
+          toFieldPath: spec.forProvider.vars[0].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.envSuffix
+          toFieldPath: spec.forProvider.vars[1].value
         - type: FromCompositeFieldPath
           fromFieldPath: spec.minCapacity
-          toFieldPath: spec.forProvider.variables.postgres_cluster.min_capacity
+          toFieldPath: spec.forProvider.vars[2].value
         - type: FromCompositeFieldPath
           fromFieldPath: spec.maxCapacity
-          toFieldPath: spec.forProvider.variables.postgres_cluster.max_capacity
-        - type: FromCompositeFieldPath
-          fromFieldPath: spec.databaseName
-          toFieldPath: spec.forProvider.variables.postgres_cluster.name
+          toFieldPath: spec.forProvider.vars[3].value
         - type: FromCompositeFieldPath
           fromFieldPath: spec.backupWindow
-          toFieldPath: spec.forProvider.variables.postgres_cluster.backup_window
+          toFieldPath: spec.forProvider.vars[4].value
         - type: FromCompositeFieldPath
           fromFieldPath: spec.maintenanceWindow
-          toFieldPath: spec.forProvider.variables.postgres_cluster.maintenance_window
+          toFieldPath: spec.forProvider.vars[5].value
         - type: FromCompositeFieldPath
-          fromFieldPath: metadata.name
-          toFieldPath: spec.forProvider.variables.environment_suffix
+          fromFieldPath: spec.backupRetentionPeriod
+          toFieldPath: spec.forProvider.vars[6].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.deletionProtection
+          toFieldPath: spec.forProvider.vars[7].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.engineVersion
+          toFieldPath: spec.forProvider.vars[8].value
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.masterUsername
+          toFieldPath: spec.forProvider.vars[9].value
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
           toFieldPath: metadata.name
@@ -228,14 +244,20 @@ spec:
           toFieldPath: metadata.labels
         connectionDetails:
         - name: cluster_endpoint
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: cluster_endpoint
         - name: cluster_reader_endpoint
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: cluster_reader_endpoint
         - name: cluster_id
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: cluster_id
         - name: master_password
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: master_password
         - name: vpc_id
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: vpc_id
         - name: database_subnet_group_name
+          type: FromConnectionSecretKey
           fromConnectionSecretKey: database_subnet_group_name

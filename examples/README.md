@@ -57,3 +57,27 @@ kubectl apply -f clusters/development/amazeeai-global.yaml # Set up provisioning
 ```
 For the global provisioning system, it is recommended that you use a managed database service, but if you wish to deploy one as part of the k0rdent setup you can do so in the `postgresql` block by setting `enabled: true` and defining your preferred values. For more details on the amazee.ai helm chart, see [the dedicated README](https://github.com/amazeeio/amazee.ai/tree/main/helm).
 The LiteLLM system is self contained, but requires credentials for connecting to configured Amazon Bedrock LLMs. If you are deploying your own models locally, then the AWS credentials may not be necessary.
+
+## AWS (or other) resources
+Resources such as DBs can be created using crossplane and terraform. You can either deploy crossplane as a standalong cluster
+```bash
+kubectl apply -f clusters/development/crossplane-resources.yaml
+```
+Or you can add the service to another cluster following the standard K0rdent practices.
+
+Once you have crossplane installed, ensure that the various XRDs are created
+```bash
+kubectl get xrds -A
+```
+If they are not, you may have to manually apply the template
+```bash
+kubectl apply -f charts/crossplane/templates/aws-vector-db.yaml
+```
+You can then create a resource by applying the appropriate claim - so for vector DBs
+```bash
+kubectl apply -f resources/development/vector-db-ir1.yaml
+```
+This will run terraform to create the resources defined in `terraform/vector-db` with the specified configuration. You can update the terraform by modifying the claim yaml and re-applying it. To delete (safely via terraform) the resources, you use
+```bash
+kubectl delete vectordb-claims.db.amazee.ai vector-db-ir1
+```

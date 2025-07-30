@@ -9,15 +9,53 @@ variable "environment_suffix" {
   type        = string
 }
 
-variable "postgres_cluster" {
-  description = "PostgreSQL cluster configuration"
-  type = object({
-    name                = string
-    min_capacity        = number
-    max_capacity        = number
-    backup_window       = string
-    maintenance_window  = string
-  })
+variable "postgres_cluster_name" {
+  description = "PostgreSQL cluster name"
+  type        = string
+}
+
+variable "postgres_cluster_min_capacity" {
+  description = "PostgreSQL cluster minimum capacity"
+  type        = number
+}
+
+variable "postgres_cluster_max_capacity" {
+  description = "PostgreSQL cluster maximum capacity"
+  type        = number
+}
+
+variable "postgres_cluster_backup_window" {
+  description = "PostgreSQL cluster backup window"
+  type        = string
+}
+
+variable "postgres_cluster_maintenance_window" {
+  description = "PostgreSQL cluster maintenance window"
+  type        = string
+}
+
+variable "engine_version" {
+  description = "Aurora PostgreSQL engine version"
+  type        = string
+  default     = "16.6"
+}
+
+variable "master_username" {
+  description = "Master database username"
+  type        = string
+  default     = "postgres"
+}
+
+variable "backup_retention_period" {
+  description = "Days to retain backups"
+  type        = number
+  default     = 7
+}
+
+variable "deletion_protection" {
+  description = "Enable deletion protection"
+  type        = bool
+  default     = true
 }
 
 variable "tags" {

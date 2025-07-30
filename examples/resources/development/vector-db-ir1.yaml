@@ -7,10 +7,10 @@ spec:
   location: eu-west-1
 
   # Optional parameters with defaults
+  envSuffix: "dev"
   engineVersion: "16.6"
   minCapacity: 0.5
   maxCapacity: 16
-  databaseName: "vectordb"
   masterUsername: "postgres"
   backupRetentionPeriod: 7
   backupWindow: "06:42-07:12"
