@@ -48,3 +48,20 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: amazeeai-k0rdent-catalog
+---
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: ServiceTemplate
+metadata:
+  name: crossplane-0.1.4
+  namespace: k0rdent
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  helm:
+    chartSpec:
+      chart: crossplane
+      version: 0.1.4-crossplane-terraform
+      interval: 10m0s
+      sourceRef:
+        kind: HelmRepository
+        name: amazeeai-k0rdent-catalog

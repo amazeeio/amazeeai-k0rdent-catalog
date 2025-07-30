@@ -21,7 +21,7 @@ spec:
     services:
       - name: crossplane
         namespace: crossplane-system
-        template: crossplane-0.1.3
+        template: crossplane-0.1.4
         values: |
           crossplane:
             enabled: true

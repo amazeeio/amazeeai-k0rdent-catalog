@@ -8,7 +8,7 @@ spec:
 
   # Optional parameters with defaults
   engineVersion: "16.6"
-  minCapacity: 2
+  minCapacity: 0.5
   maxCapacity: 16
   databaseName: "vectordb"
   masterUsername: "postgres"

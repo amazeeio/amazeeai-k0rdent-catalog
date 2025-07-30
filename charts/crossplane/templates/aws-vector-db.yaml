@@ -177,7 +177,7 @@ spec:
           spec:
             forProvider:
               source: Remote
-              module: "github.com/amazeeai-k0rdent-catalog/terraform/vector-db"
+              module: "github.com/amazeeai-k0rdent-catalog//terraform/vector-db"
               version: "main"
               providerConfigRef:
                 name: aws-provider-config
