@@ -2,6 +2,10 @@
 provider "aws" {
   alias  = "main"
   region = var.region
+
+  # Use credentials from aws-creds.txt file
+  shared_credentials_files = ["aws-creds.txt"]
+  profile                  = "default"
 }
 
 # Data sources

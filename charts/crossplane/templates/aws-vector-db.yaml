@@ -137,16 +137,13 @@ metadata:
     helm.sh/hook-weight: "3"
     helm.sh/hook-delete-policy: hook-succeeded
 spec:
-  configuration:
+  credentials:
+  - filename: aws-creds.txt
     source: Secret
     secretRef:
       namespace: crossplane-system
       name: aws-creds
       key: credentials
-  requirements:
-    provider:
-      source: hashicorp/aws
-      version: "~> 5.0"
 
 ---
 # 4. Composition - must be created after XRD, secret, and provider config
