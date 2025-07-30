@@ -83,7 +83,7 @@ spec:
             enabled: false
       - name: crossplane
         namespace: crossplane
-        template: crossplane-0.1.2
+        template: crossplane-0.1.9
         values: |
           crossplane:
             enabled: true

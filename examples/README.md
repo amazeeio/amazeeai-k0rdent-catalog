@@ -81,3 +81,7 @@ This will run terraform to create the resources defined in `terraform/vector-db`
 ```bash
 kubectl delete vectordb-claims.db.amazee.ai vector-db-ir1
 ```
+To get the DB password from the kubernetes secret, you can use
+```bash
+kubectl get secret vector-db-connection -n crossplane-system --template={{.data.vectordb_master_passwords}} | base64 --decode
+```

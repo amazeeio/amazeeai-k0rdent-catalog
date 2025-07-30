@@ -30,7 +30,6 @@ spec:
           echo "Terraform provider CRDs are ready!"
       restartPolicy: Never
   backoffLimit: 3
-
 ---
 # 1. Composite Resource Definition (XRD) - must be created first
 apiVersion: apiextensions.crossplane.io/v1
@@ -93,6 +92,10 @@ spec:
                 type: boolean
                 default: true
                 description: "Enable deletion protection"
+              clusterName:
+                type: string
+                default: "vectordb"
+                description: "Name of the cluster"
             required:
             - location
     served: true
@@ -100,29 +103,8 @@ spec:
   claimNames:
     kind: VectorDBClaim
     plural: vectordb-claims
-
 ---
-# 2. AWS Credentials Secret - must be created before provider config
-# Note: Update this secret with real AWS credentials after deployment
-# apiVersion: v1
-# kind: Secret
-# metadata:
-#   name: aws-creds
-#   namespace: crossplane-system
-#   annotations:
-#     description: "Update this secret with real AWS credentials after deployment"
-#     helm.sh/hook: post-install,post-upgrade
-#     helm.sh/hook-weight: "2"
-#     helm.sh/hook-delete-policy: hook-succeeded
-# type: Opaque
-# stringData:
-#   credentials: |
-#     [default]
-#     aws_access_key_id = "changeme"
-#     aws_secret_access_key = "changeme"
-#
----
-# 3. Terraform Provider Configuration - must be created after secret
+# 2. Terraform Provider Configuration - must be created after secret
 apiVersion: tf.upbound.io/v1beta1
 kind: ProviderConfig
 metadata:
@@ -139,9 +121,8 @@ spec:
       namespace: crossplane-system
       name: aws-creds
       key: credentials
-
 ---
-# 4. Composition - must be created after XRD, secret, and provider config
+# 3. Composition - must be created after XRD, secret, and provider config
 apiVersion: apiextensions.crossplane.io/v1
 kind: Composition
 metadata:
@@ -185,54 +166,80 @@ spec:
                 - key: postgres_cluster_name
                   value: "vectordb"
                 - key: postgres_cluster_min_capacity
-                  value: "2"
+                  value: 2
                 - key: postgres_cluster_max_capacity
-                  value: "16"
+                  value: 16
                 - key: postgres_cluster_backup_window
                   value: "06:42-07:12"
                 - key: postgres_cluster_maintenance_window
                   value: "wed:04:35-wed:05:05"
-                - key: postgres_cluster_backup_retention_period
-                  value: "7"
-                - key: postgres_cluster_deletion_protection
-                  value: "true"
-                - key: postgres_cluster_engine_version
+                - key: backup_retention_period
+                  value: 7
+                - key: deletion_protection
+                  value: true
+                - key: engine_version
                   value: "16.6"
-                - key: postgres_cluster_master_username
+                - key: master_username
                   value: "postgres"
                 - key: tags
                   value: '{"Environment":"production","ManagedBy":"crossplane"}'
+            writeConnectionSecretToRef:
+              name: vector-db-connection
+              namespace: crossplane-system
         patches:
         - type: FromCompositeFieldPath
           fromFieldPath: spec.location
-          toFieldPath: spec.forProvider.vars[0].value
+          toFieldPath: spec.forProvider.vars[0].value # region
         - type: FromCompositeFieldPath
           fromFieldPath: spec.envSuffix
-          toFieldPath: spec.forProvider.vars[1].value
+          toFieldPath: spec.forProvider.vars[1].value # environment_suffix
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.clusterName
+          toFieldPath: spec.forProvider.vars[2].value # postgres_cluster_name
         - type: FromCompositeFieldPath
           fromFieldPath: spec.minCapacity
-          toFieldPath: spec.forProvider.vars[2].value
+          toFieldPath: spec.forProvider.vars[3].value # postgres_cluster_min_capacity
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%v"
         - type: FromCompositeFieldPath
           fromFieldPath: spec.maxCapacity
-          toFieldPath: spec.forProvider.vars[3].value
+          toFieldPath: spec.forProvider.vars[4].value # postgres_cluster_max_capacity
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%v"
         - type: FromCompositeFieldPath
           fromFieldPath: spec.backupWindow
-          toFieldPath: spec.forProvider.vars[4].value
+          toFieldPath: spec.forProvider.vars[5].value # postgres_cluster_backup_window
         - type: FromCompositeFieldPath
           fromFieldPath: spec.maintenanceWindow
-          toFieldPath: spec.forProvider.vars[5].value
+          toFieldPath: spec.forProvider.vars[6].value # postgres_cluster_maintenance_window
         - type: FromCompositeFieldPath
           fromFieldPath: spec.backupRetentionPeriod
-          toFieldPath: spec.forProvider.vars[6].value
+          toFieldPath: spec.forProvider.vars[7].value # backup_retention_period
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%v"
         - type: FromCompositeFieldPath
           fromFieldPath: spec.deletionProtection
-          toFieldPath: spec.forProvider.vars[7].value
+          toFieldPath: spec.forProvider.vars[8].value # deletion_protection
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%v"
         - type: FromCompositeFieldPath
           fromFieldPath: spec.engineVersion
-          toFieldPath: spec.forProvider.vars[8].value
+          toFieldPath: spec.forProvider.vars[9].value # engine_version
         - type: FromCompositeFieldPath
           fromFieldPath: spec.masterUsername
-          toFieldPath: spec.forProvider.vars[9].value
+          toFieldPath: spec.forProvider.vars[10].value # master_username
         - type: FromCompositeFieldPath
           fromFieldPath: metadata.name
           toFieldPath: metadata.name
