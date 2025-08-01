@@ -100,3 +100,32 @@ spec:
       location: "us-east-1"
       providerConfigRef: "aws-creds"
       envSuffix: "dev"
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: vectordb-infrastructure
+spec:
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDB
+  mode: Pipeline
+  pipeline:
+  - step: generate-vectordb-infrastructure
+    functionRef:
+      name: amazeeio-amazeeai-k0rdent-catalog-vectordb-function
+    input:
+      apiVersion: db.amazee.ai/v1alpha1
+      kind: Input
+      location: "{{ .spec.location }}"
+      providerConfigRef: "{{ .spec.providerConfigRef }}"
+      envSuffix: "{{ .spec.envSuffix }}"
+      engineVersion: "{{ .spec.engineVersion }}"
+      minCapacity: "{{ .spec.minCapacity }}"
+      maxCapacity: "{{ .spec.maxCapacity }}"
+      masterUsername: "{{ .spec.masterUsername }}"
+      backupRetentionPeriod: "{{ .spec.backupRetentionPeriod }}"
+      backupWindow: "{{ .spec.backupWindow }}"
+      maintenanceWindow: "{{ .spec.maintenanceWindow }}"
+      deletionProtection: "{{ .spec.deletionProtection }}"
+      clusterName: "{{ .spec.clusterName }}"

@@ -285,15 +285,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "description": "PostgreSQL access",
                         },
                     ],
-                    "egress": [
-                        {
-                            "fromPort": 0,
-                            "toPort": 0,
-                            "protocol": "-1",
-                            "cidrBlocks": ["0.0.0.0/0"],
-                            "description": "Allow all outbound traffic",
-                        },
-                    ],
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
@@ -314,21 +305,24 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
 
     def _create_subnet_group(self, config: VectorDBConfig) -> dict:
         """Create RDS subnet group from subnet IDs."""
+        # Create resource references for each subnet
+        subnet_refs = []
+        for i in range(config.az_count):
+            subnet_refs.append(
+                {
+                    "apiVersion": "ec2.aws.upbound.io/v1beta1",
+                    "kind": "Subnet",
+                    "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
+                }
+            )
+
         return {
             "apiVersion": "rds.aws.upbound.io/v1beta1",
             "kind": "SubnetGroup",
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "subnetIds": [
-                        {
-                            "matchLabels": {
-                                "app": "vectordb",
-                                "environment": config.environment_suffix,
-                                "type": "database",
-                            },
-                        },
-                    ],
+                    "subnetIds": subnet_refs,
                     "description": f"Subnet group for {config.postgres_cluster_name}",
                 },
                 "providerConfigRef": {
@@ -387,14 +381,10 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "finalSnapshotIdentifier": (f"{config.postgres_cluster_name}-final-snapshot"),
                     "copyTagsToSnapshot": True,
                     "iamDatabaseAuthenticationEnabled": False,
-                    "networkType": "IPV4",
                     "enableHttpEndpoint": False,
-                    "autoMinorVersionUpgrade": True,
-                    "monitoringInterval": 60,
                     "performanceInsightsEnabled": True,
                     "performanceInsightsRetentionPeriod": 7,
                     "dbClusterParameterGroupName": "default.aurora-postgresql16",
-                    "dbParameterGroupName": "default.aurora-postgresql16",
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
