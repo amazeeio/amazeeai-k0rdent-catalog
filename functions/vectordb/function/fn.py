@@ -142,6 +142,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "cidrBlock": config.vpc_cidr,
                     "enableDnsHostnames": True,
                     "enableDnsSupport": True,
+                    "tags": {
+                        "Name": f"vectordb-vpc-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                    },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
@@ -168,6 +173,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
+                    "tags": {
+                        "Name": f"vectordb-igw-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                    },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
@@ -207,6 +217,12 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "cidrBlock": cidr,
                         "availabilityZone": az,
                         "mapPublicIpOnLaunch": True,
+                        "tags": {
+                            "Name": f"vectordb-subnet-{i}-{config.environment_suffix}",
+                            "App": "vectordb",
+                            "Environment": config.environment_suffix,
+                            "Type": "database",
+                        },
                     },
                     "providerConfigRef": {
                         "name": config.provider_config_ref,
@@ -242,6 +258,12 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "app": "vectordb",
                             "environment": config.environment_suffix,
                         },
+                    },
+                    "tags": {
+                        "Name": f"vectordb-route-table-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                        "Type": "database",
                     },
                 },
                 "providerConfigRef": {
@@ -285,6 +307,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "description": "PostgreSQL access",
                         },
                     ],
+                    "tags": {
+                        "Name": f"vectordb-security-group-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                    },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
@@ -324,6 +351,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "region": config.region,
                     "subnetIds": subnet_refs,
                     "description": f"Subnet group for {config.postgres_cluster_name}",
+                    "tags": {
+                        "Name": f"vectordb-subnet-group-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                    },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
@@ -361,21 +393,21 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "environment": config.environment_suffix,
                         },
                     },
-                    "vpcSecurityGroupIds": [
+                    "vpcSecurityGroupIdsSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
+                    "backupRetentionPeriod": config.backup_retention_period,
+                    "preferredBackupWindow": config.backup_window,
+                    "preferredMaintenanceWindow": config.maintenance_window,
+                    "serverlessv2ScalingConfiguration": [
                         {
-                            "matchLabels": {
-                                "app": "vectordb",
-                                "environment": config.environment_suffix,
-                            },
+                            "minCapacity": config.postgres_cluster_min_capacity,
+                            "maxCapacity": config.postgres_cluster_max_capacity,
                         },
                     ],
-                    "backupRetentionPeriod": config.backup_retention_period,
-                    "backupWindow": config.backup_window,
-                    "preferredMaintenanceWindow": config.maintenance_window,
-                    "serverlessv2ScalingConfiguration": {
-                        "minCapacity": config.postgres_cluster_min_capacity,
-                        "maxCapacity": config.postgres_cluster_max_capacity,
-                    },
                     "deletionProtection": config.deletion_protection,
                     "skipFinalSnapshot": False,
                     "finalSnapshotIdentifier": (f"{config.postgres_cluster_name}-final-snapshot"),
@@ -385,6 +417,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "performanceInsightsEnabled": True,
                     "performanceInsightsRetentionPeriod": 7,
                     "dbClusterParameterGroupName": "default.aurora-postgresql16",
+                    "tags": {
+                        "Name": f"vectordb-cluster-{config.environment_suffix}",
+                        "App": "vectordb",
+                        "Environment": config.environment_suffix,
+                    },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
