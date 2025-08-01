@@ -72,6 +72,17 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         route_table_resource = self._create_database_route_table(config)
         resources.append(("route_table", route_table_resource))
 
+        # 4.1. Create route to Internet Gateway
+        igw_route_resource = self._create_igw_route(config)
+        resources.append(("igw_route", igw_route_resource))
+
+        # 4.2. Create route table associations for each subnet
+        route_table_association_resources = self._create_route_table_associations(
+            config, len(subnet_resources)
+        )
+        for i, association in enumerate(route_table_association_resources):
+            resources.append((f"route_table_association_{i}", association))
+
         # 5. Create security group
         security_group_resource = self._create_database_security_group(config)
         resources.append(("security_group", security_group_resource))
@@ -181,6 +192,12 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
+                    "vpcIdSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
                     "tags": {
                         "Name": f"vectordb-igw-{config.environment_suffix}",
                         "App": "vectordb",
@@ -252,6 +269,96 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             subnets.append(subnet)
 
         return subnets
+
+    def _create_route_table_associations(
+        self, config: VectorDBConfig, subnet_count: int
+    ) -> list[dict]:
+        """Create route table associations for each subnet."""
+        associations = []
+
+        for i in range(subnet_count):
+            association = {
+                "apiVersion": "ec2.aws.upbound.io/v1beta1",
+                "kind": "RouteTableAssociation",
+                "spec": {
+                    "forProvider": {
+                        "region": config.region,
+                        "subnetIdSelector": {
+                            "matchLabels": {
+                                "app": "vectordb",
+                                "environment": config.environment_suffix,
+                                "type": "database",
+                            },
+                        },
+                        "routeTableIdSelector": {
+                            "matchLabels": {
+                                "app": "vectordb",
+                                "environment": config.environment_suffix,
+                                "type": "database",
+                            },
+                        },
+                    },
+                    "providerConfigRef": {
+                        "name": config.provider_config_ref,
+                    },
+                    "writeConnectionSecretToRef": {
+                        "name": f"vectordb-route-table-association-{i}-{config.environment_suffix}",
+                        "namespace": config.namespace,
+                    },
+                },
+                "metadata": {
+                    "name": f"vectordb-route-table-association-{i}-{config.environment_suffix}",
+                    "labels": {
+                        "app": "vectordb",
+                        "environment": config.environment_suffix,
+                        "type": "database",
+                    },
+                },
+            }
+            associations.append(association)
+
+        return associations
+
+    def _create_igw_route(self, config: VectorDBConfig) -> dict:
+        """Create route to Internet Gateway."""
+        return {
+            "apiVersion": "ec2.aws.upbound.io/v1beta1",
+            "kind": "Route",
+            "spec": {
+                "forProvider": {
+                    "region": config.region,
+                    "destinationCidrBlock": "0.0.0.0/0",
+                    "gatewayIdSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
+                    "routeTableIdSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                            "type": "database",
+                        },
+                    },
+                },
+                "providerConfigRef": {
+                    "name": config.provider_config_ref,
+                },
+                "writeConnectionSecretToRef": {
+                    "name": f"vectordb-igw-route-{config.environment_suffix}",
+                    "namespace": config.namespace,
+                },
+            },
+            "metadata": {
+                "name": f"vectordb-igw-route-{config.environment_suffix}",
+                "labels": {
+                    "app": "vectordb",
+                    "environment": config.environment_suffix,
+                    "type": "database",
+                },
+            },
+        }
 
     def _create_database_route_table(self, config: VectorDBConfig) -> dict:
         """Create route table with IGW route for database subnets."""
