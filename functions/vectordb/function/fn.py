@@ -76,11 +76,19 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         security_group_resource = self._create_database_security_group(config)
         resources.append(("security_group", security_group_resource))
 
-        # 6. Create subnet group
+        # 6. Create security group rule for PostgreSQL access
+        security_group_rule_resource = self._create_security_group_rule(config)
+        resources.append(("security_group_rule", security_group_rule_resource))
+
+        # 7. Create security group rule for all outbound traffic
+        egress_rule_resource = self._create_egress_rule(config)
+        resources.append(("egress_rule", egress_rule_resource))
+
+        # 8. Create subnet group
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
 
-        # 7. Create Aurora cluster
+        # 9. Create Aurora cluster
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
 
@@ -298,15 +306,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "environment": config.environment_suffix,
                         },
                     },
-                    "ingress": [
-                        {
-                            "fromPort": 5432,
-                            "toPort": 5432,
-                            "protocol": "tcp",
-                            "cidrBlocks": ["0.0.0.0/0"],
-                            "description": "PostgreSQL access",
-                        },
-                    ],
                     "tags": {
                         "Name": f"vectordb-security-group-{config.environment_suffix}",
                         "App": "vectordb",
@@ -330,26 +329,88 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             },
         }
 
+    def _create_security_group_rule(self, config: VectorDBConfig) -> dict:
+        """Create security group rule allowing PostgreSQL access."""
+        return {
+            "apiVersion": "ec2.aws.upbound.io/v1beta1",
+            "kind": "SecurityGroupRule",
+            "spec": {
+                "forProvider": {
+                    "region": config.region,
+                    "type": "ingress",
+                    "fromPort": 5432,
+                    "toPort": 5432,
+                    "protocol": "tcp",
+                    "cidrBlocks": ["0.0.0.0/0"],
+                    "description": "PostgreSQL access",
+                    "securityGroupIdSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
+                },
+                "providerConfigRef": {
+                    "name": config.provider_config_ref,
+                },
+            },
+            "metadata": {
+                "name": f"vectordb-postgres-ingress-{config.environment_suffix}",
+                "labels": {
+                    "app": "vectordb",
+                    "environment": config.environment_suffix,
+                },
+            },
+        }
+
+    def _create_egress_rule(self, config: VectorDBConfig) -> dict:
+        """Create security group rule allowing all outbound traffic."""
+        return {
+            "apiVersion": "ec2.aws.upbound.io/v1beta1",
+            "kind": "SecurityGroupRule",
+            "spec": {
+                "forProvider": {
+                    "region": config.region,
+                    "type": "egress",
+                    "fromPort": 0,
+                    "toPort": 0,
+                    "protocol": "-1",  # All protocols
+                    "cidrBlocks": ["0.0.0.0/0"],
+                    "description": "Allow all outbound traffic",
+                    "securityGroupIdSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
+                },
+                "providerConfigRef": {
+                    "name": config.provider_config_ref,
+                },
+            },
+            "metadata": {
+                "name": f"vectordb-egress-all-{config.environment_suffix}",
+                "labels": {
+                    "app": "vectordb",
+                    "environment": config.environment_suffix,
+                },
+            },
+        }
+
     def _create_subnet_group(self, config: VectorDBConfig) -> dict:
         """Create RDS subnet group from subnet IDs."""
-        # Create resource references for each subnet
-        subnet_refs = []
-        for i in range(config.az_count):
-            subnet_refs.append(
-                {
-                    "apiVersion": "ec2.aws.upbound.io/v1beta1",
-                    "kind": "Subnet",
-                    "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
-                }
-            )
-
         return {
             "apiVersion": "rds.aws.upbound.io/v1beta1",
             "kind": "SubnetGroup",
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "subnetIds": subnet_refs,
+                    "subnetIdsSelector": {
+                        "matchLabels": {
+                            "app": "vectordb",
+                            "environment": config.environment_suffix,
+                        },
+                    },
                     "description": f"Subnet group for {config.postgres_cluster_name}",
                     "tags": {
                         "Name": f"vectordb-subnet-group-{config.environment_suffix}",
@@ -393,7 +454,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                             "environment": config.environment_suffix,
                         },
                     },
-                    "vpcSecurityGroupIdsSelector": {
+                    "vpcSecurityGroupIdSelector": {
                         "matchLabels": {
                             "app": "vectordb",
                             "environment": config.environment_suffix,

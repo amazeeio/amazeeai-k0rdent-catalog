@@ -169,17 +169,73 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # When: Creating security group
         security_group_resource = runner._create_database_security_group(config)
 
-        # Then: Should allow PostgreSQL port (5432) from 0.0.0.0/0
+        # Then: Should have basic security group configuration
         self.assertEqual(security_group_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(security_group_resource["kind"], "SecurityGroup")
         self.assertEqual(security_group_resource["metadata"]["name"], "vectordb-security-group-dev")
+        self.assertEqual(security_group_resource["spec"]["forProvider"]["region"], "us-west-2")
+        self.assertIn("vpcIdSelector", security_group_resource["spec"]["forProvider"])
+        self.assertIn("tags", security_group_resource["spec"]["forProvider"])
 
-        ingress_rules = security_group_resource["spec"]["forProvider"]["ingress"]
-        self.assertEqual(len(ingress_rules), 1)
-        self.assertEqual(ingress_rules[0]["fromPort"], 5432)
-        self.assertEqual(ingress_rules[0]["toPort"], 5432)
-        self.assertEqual(ingress_rules[0]["protocol"], "tcp")
-        self.assertEqual(ingress_rules[0]["cidrBlocks"], ["0.0.0.0/0"])
+    def test_create_security_group_rule(self):
+        """Test security group rule creation for PostgreSQL access."""
+        # Given: Configuration
+        config = fn.VectorDBConfig(
+            vpc_cidr="10.10.0.0/16",
+            region="us-west-2",
+            environment_suffix="dev",
+            master_username="postgres",
+            postgres_cluster_name="vectordb-cluster",
+        )
+        runner = fn.VectorDBFunctionRunner()
+
+        # When: Creating security group rule
+        security_group_rule_resource = runner._create_security_group_rule(config)
+
+        # Then: Should have proper ingress rule configuration
+        self.assertEqual(security_group_rule_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
+        self.assertEqual(security_group_rule_resource["kind"], "SecurityGroupRule")
+        self.assertEqual(
+            security_group_rule_resource["metadata"]["name"], "vectordb-postgres-ingress-dev"
+        )
+        self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["type"], "ingress")
+        self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["fromPort"], 5432)
+        self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["toPort"], 5432)
+        self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["protocol"], "tcp")
+        self.assertEqual(
+            security_group_rule_resource["spec"]["forProvider"]["cidrBlocks"], ["0.0.0.0/0"]
+        )
+        self.assertEqual(
+            security_group_rule_resource["spec"]["forProvider"]["description"], "PostgreSQL access"
+        )
+
+    def test_create_egress_rule(self):
+        """Test security group egress rule creation."""
+        # Given: Configuration
+        config = fn.VectorDBConfig(
+            vpc_cidr="10.10.0.0/16",
+            region="us-west-2",
+            environment_suffix="dev",
+            master_username="postgres",
+            postgres_cluster_name="vectordb-cluster",
+        )
+        runner = fn.VectorDBFunctionRunner()
+
+        # When: Creating egress rule
+        egress_rule_resource = runner._create_egress_rule(config)
+
+        # Then: Should have proper egress rule configuration
+        self.assertEqual(egress_rule_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
+        self.assertEqual(egress_rule_resource["kind"], "SecurityGroupRule")
+        self.assertEqual(egress_rule_resource["metadata"]["name"], "vectordb-egress-all-dev")
+        self.assertEqual(egress_rule_resource["spec"]["forProvider"]["type"], "egress")
+        self.assertEqual(egress_rule_resource["spec"]["forProvider"]["fromPort"], 0)
+        self.assertEqual(egress_rule_resource["spec"]["forProvider"]["toPort"], 0)
+        self.assertEqual(egress_rule_resource["spec"]["forProvider"]["protocol"], "-1")
+        self.assertEqual(egress_rule_resource["spec"]["forProvider"]["cidrBlocks"], ["0.0.0.0/0"])
+        self.assertEqual(
+            egress_rule_resource["spec"]["forProvider"]["description"], "Allow all outbound traffic"
+        )
 
     def test_create_subnet_group(self):
         """Test subnet group creation."""
@@ -333,6 +389,8 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             "subnet_2",
             "route_table",
             "security_group",
+            "security_group_rule",
+            "egress_rule",
             "subnet_group",
             "aurora_cluster",
         ]
