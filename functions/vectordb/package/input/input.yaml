@@ -1,0 +1,65 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: inputs.vectordb.db.amazee.ai
+spec:
+  group: db.amazee.ai
+  names:
+    kind: Input
+    plural: inputs
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          description: "Input for the vector database composition function"
+          type: object
+          properties:
+            apiVersion:
+              type: string
+              description: "API version of the input"
+            kind:
+              type: string
+              description: "Kind of the input"
+            location:
+              type: string
+              description: "Location of the vector database"
+            providerConfigRef:
+              type: string
+              description: "Provider configuration reference"
+            envSuffix:
+              type: string
+              description: "Environment suffix"
+            engineVersion:
+              type: string
+              description: "Engine version"
+            minCapacity:
+              type: number
+              description: "Minimum capacity"
+            maxCapacity:
+              type: number
+              description: "Maximum capacity"
+            masterUsername:
+              type: string
+              description: "Master database username"
+            backupRetentionPeriod:
+              type: integer
+              description: "Days to retain backups"
+            backupWindow:
+              type: string
+              description: "Daily backup window"
+            maintenanceWindow:
+              type: string
+              description: "Weekly maintenance window"
+            deletionProtection:
+              type: boolean
+              description: "Enable deletion protection"
+            clusterName:
+              type: string
+              description: "Name of the cluster"
+            required:
+            - location
+            - providerConfigRef
+            - envSuffix

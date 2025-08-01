@@ -1,0 +1,32 @@
+# 0. Wait for Crossplane and Terraform provider to be ready before creating custom resources
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: wait-for-crossplane
+  namespace: crossplane-system
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: crossplane
+      containers:
+      - name: wait
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for Crossplane to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/crossplane -n crossplane-system
+          kubectl wait --for=condition=available --timeout=300s deployment/crossplane-rbac-manager -n crossplane-system
+          echo "Crossplane is ready!"
+
+          echo "Waiting for provider CRDs to be available..."
+          kubectl wait --for=condition=established --timeout=300s crd/providerconfigs.tf.upbound.io
+          kubectl wait --for=condition=established --timeout=300s crd/workspaces.tf.upbound.io
+          echo "provider CRDs are ready!"
+      restartPolicy: Never
+  backoffLimit: 3

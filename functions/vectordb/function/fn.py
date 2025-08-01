@@ -92,31 +92,27 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
 
     def _extract_config(self, req: fnv1.RunFunctionRequest) -> VectorDBConfig:
         """Extract configuration from request."""
-        input_data = resource.struct_to_dict(req.input)
-        composite_data = resource.struct_to_dict(req.observed.composite.resource)
+        composite_data = resource.struct_to_dict(req.observed.composite.resource)["spec"]
 
         # Extract namespace from the composite resource
         namespace = composite_data.get("metadata", {}).get("namespace", "default")
 
         return VectorDBConfig(
-            vpc_cidr=input_data.get("vpc_cidr", "10.10.0.0/16"),
-            region=(
-                composite_data["spec"].get("region")
-                or composite_data["spec"].get("location", "us-west-2")
-            ),
-            environment_suffix=input_data.get("environment_suffix", "dev"),
-            master_username=input_data.get("master_username", "postgres"),
-            postgres_cluster_name=input_data.get("postgres_cluster_name", "vectordb-cluster"),
-            az_count=int(input_data.get("az_count", 3)),
-            engine_version=input_data.get("engine_version", "16.1"),
-            postgres_cluster_min_capacity=input_data.get("postgres_cluster_min_capacity", 0.5),
-            postgres_cluster_max_capacity=input_data.get("postgres_cluster_max_capacity", 16.0),
-            backup_retention_period=int(input_data.get("backup_retention_period", 7)),
-            backup_window=input_data.get("backup_window", "03:00-04:00"),
-            maintenance_window=input_data.get("maintenance_window", "sun:04:00-sun:05:00"),
-            deletion_protection=input_data.get("deletion_protection", False),
+            vpc_cidr=composite_data.get("vpc_cidr", "10.10.0.0/16"),
+            region=composite_data.get("location", "us-west-2"),
+            environment_suffix=composite_data.get("envSuffix", "dev"),
+            master_username=composite_data.get("masterUsername", "postgres"),
+            postgres_cluster_name=composite_data.get("clusterName", "vectordb-cluster"),
+            az_count=int(composite_data.get("azCount", 3)),
+            engine_version=composite_data.get("engineVersion", "16.1"),
+            postgres_cluster_min_capacity=composite_data.get("minCapacity", 0.5),
+            postgres_cluster_max_capacity=composite_data.get("maxCapacity", 16.0),
+            backup_retention_period=int(composite_data.get("backupRetentionPeriod", 7)),
+            backup_window=composite_data.get("backupWindow", "03:00-04:00"),
+            maintenance_window=composite_data.get("maintenanceWindow", "sun:04:00-sun:05:00"),
+            deletion_protection=composite_data.get("deletionProtection", False),
             namespace=namespace,
-            provider_config_ref=input_data.get("provider_config_ref", "default"),
+            provider_config_ref=composite_data.get("providerConfigRef", "default"),
         )
 
     def _calculate_subnet_cidrs(self, vpc_cidr: str, az_count: int) -> list[str]:

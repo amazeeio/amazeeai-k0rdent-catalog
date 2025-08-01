@@ -5,7 +5,7 @@ metadata:
   namespace: crossplane-system
 spec:
   # Required parameter - AWS region
-  location: us-west-2
+  location: eu-central-1
 
   # AWS Provider Configuration
   providerConfigRef: "aws-provider-config"

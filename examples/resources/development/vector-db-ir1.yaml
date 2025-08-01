@@ -7,6 +7,8 @@ spec:
   # Required parameter - AWS region
   location: eu-west-1
 
+  providerConfigRef: "aws-creds"
+
   # Optional parameters with defaults
   envSuffix: "dev"
   engineVersion: "16.6"

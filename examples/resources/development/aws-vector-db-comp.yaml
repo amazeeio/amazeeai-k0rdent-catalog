@@ -1,0 +1,102 @@
+apiVersion: aws.upbound.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: aws-creds
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: crossplane-system
+      name: aws-creds
+      key: credentials
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: vectordbs.db.amazee.ai
+spec:
+  group: db.amazee.ai
+  names:
+    kind: VectorDB
+    plural: vectordbs
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              location:
+                type: string
+                description: "AWS region for the vector database"
+              providerConfigRef:
+                type: string
+                description: "AWS provider configuration"
+              envSuffix:
+                type: string
+                description: "Environment suffix for the vector database"
+              engineVersion:
+                type: string
+                default: "16.6"
+                description: "Aurora PostgreSQL engine version"
+              minCapacity:
+                type: number
+                default: 2
+                description: "Minimum ACU for Serverless v2"
+              maxCapacity:
+                type: number
+                default: 16
+                description: "Maximum ACU for Serverless v2"
+              masterUsername:
+                type: string
+                default: "postgres"
+                description: "Master database username"
+              backupRetentionPeriod:
+                type: integer
+                default: 7
+                description: "Days to retain backups"
+              backupWindow:
+                type: string
+                default: "06:42-07:12"
+                description: "Daily backup window"
+              maintenanceWindow:
+                type: string
+                default: "wed:04:35-wed:05:05"
+                description: "Weekly maintenance window"
+              deletionProtection:
+                type: boolean
+                default: true
+                description: "Enable deletion protection"
+              clusterName:
+                type: string
+                default: "vectordb"
+                description: "Name of the cluster"
+            required:
+            - location
+    served: true
+    referenceable: true
+  claimNames:
+    kind: VectorDBClaim
+    plural: vectordb-claims
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: vectordb
+spec:
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDBClaim
+  mode: Pipeline
+  pipeline:
+  - step: generate-vectordb-infrastructure
+    functionRef:
+      name: amazeeio-amazeeai-k0rdent-catalog-vectordb-function
+    input:
+      apiVersion: db.amazee.ai/v1alpha1
+      kind: Input
+      location: "us-east-1"
+      providerConfigRef: "aws-creds"
+      envSuffix: "dev"
