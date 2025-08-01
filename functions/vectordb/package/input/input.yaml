@@ -1,14 +1,14 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: inputs.vectordb.db.amazee.ai
+  name: vectordbinputs.db.amazee.ai
   annotations:
     controller-gen.kubebuilder.io/version: v0.12.1
 spec:
   group: db.amazee.ai
   names:
-    kind: Input
-    plural: inputs
+    kind: VectorDBInput
+    plural: vectordbinputs
   scope: Namespaced
   versions:
   - name: v1alpha1
