@@ -405,10 +405,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "subnetIdsSelector": {
+                    "subnetIdSelector": {
                         "matchLabels": {
                             "app": "vectordb",
                             "environment": config.environment_suffix,
+                            "type": "database",
                         },
                     },
                     "description": f"Subnet group for {config.postgres_cluster_name}",
