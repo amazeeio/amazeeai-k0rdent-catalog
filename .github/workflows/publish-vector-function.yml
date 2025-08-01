@@ -1,0 +1,227 @@
+name: Publish VectorDB Crossplane Function
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'functions/vectordb/**'
+      - '.github/workflows/publish-vector-function.yml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'functions/vectordb/**'
+      - '.github/workflows/publish-vector-function.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (leave empty to use hatch version)'
+        required: false
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: amazeeio/amazee-k0rdent-catalog/function-vectordb
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Hatch
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch
+
+      - name: Run tests
+        working-directory: functions/vectordb
+        run: |
+          hatch run test
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Hatch
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch
+
+      - name: Get version
+        id: version
+        working-directory: functions/vectordb
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(hatch version)
+          fi
+
+          if [ "${GITHUB_REF_NAME}" != "${{ github.event.repository.default_branch }}" ]; then
+            VERSION="$VERSION-${GITHUB_REF_NAME//\//-}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build runtime image
+        working-directory: functions/vectordb
+        run: |
+          docker build . \
+            --quiet \
+            --platform=${{ matrix.platform }} \
+            --tag runtime-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+
+      - name: Install Crossplane CLI
+        run: |
+          curl -sL https://releases.crossplane.io/stable/v1.14.0/crossplane-linux-amd64.tar.gz | tar xz
+          sudo mv kubectl-crossplane /usr/local/bin/crossplane
+          sudo chmod +x /usr/local/bin/crossplane
+
+      - name: Build package
+        working-directory: functions/vectordb
+        run: |
+          crossplane xpkg build \
+            --package-root=package \
+            --embed-runtime-image=runtime-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }} \
+            --package-file=function-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}.xpkg
+
+      - name: Push package to registry
+        working-directory: functions/vectordb
+        run: |
+          crossplane xpkg push \
+            --package-files=function-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}.xpkg \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+
+  push-multi-platform:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Hatch
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch
+
+      - name: Get version
+        id: version
+        working-directory: functions/vectordb
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=$(hatch version)
+          fi
+
+          if [ "${GITHUB_REF_NAME}" != "${{ github.event.repository.default_branch }}" ]; then
+            VERSION="$VERSION-${GITHUB_REF_NAME//\//-}"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build runtime images
+        working-directory: functions/vectordb
+        run: |
+          docker build . --quiet --platform=linux/amd64 --tag runtime-amd64
+          docker build . --quiet --platform=linux/arm64 --tag runtime-arm64
+
+      - name: Install Crossplane CLI
+        run: |
+          curl -sL https://releases.crossplane.io/stable/v1.14.0/crossplane-linux-amd64.tar.gz | tar xz
+          sudo mv kubectl-crossplane /usr/local/bin/crossplane
+          sudo chmod +x /usr/local/bin/crossplane
+
+      - name: Build packages
+        working-directory: functions/vectordb
+        run: |
+          crossplane xpkg build \
+            --package-root=package \
+            --embed-runtime-image=runtime-amd64 \
+            --package-file=function-amd64.xpkg
+          crossplane xpkg build \
+            --package-root=package \
+            --embed-runtime-image=runtime-arm64 \
+            --package-file=function-arm64.xpkg
+
+      - name: Push multi-platform package
+        working-directory: functions/vectordb
+        run: |
+          crossplane xpkg push \
+            --package-files=function-amd64.xpkg,function-arm64.xpkg \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: function-vectordb-v${{ steps.version.outputs.version }}
+          name: VectorDB Function v${{ steps.version.outputs.version }}
+          body: |
+            ## VectorDB Crossplane Function v${{ steps.version.outputs.version }}
+
+            This release contains the VectorDB composition function for Crossplane.
+
+            ### Installation
+
+            ```bash
+            kubectl apply -f https://ghcr.io/amazeeio/amazee-k0rdent-catalog/function-vectordb:${{ steps.version.outputs.version }}
+            ```
+
+            ### Usage
+
+            See the [README](functions/vectordb/README.md) for usage instructions.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

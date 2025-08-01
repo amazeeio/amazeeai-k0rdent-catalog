@@ -23,6 +23,8 @@ class VectorDBConfig:
     postgres_cluster_min_capacity: float = 0.5
     postgres_cluster_max_capacity: float = 16.0
     backup_retention_period: int = 7
+    backup_window: str = "03:00-04:00"
+    maintenance_window: str = "sun:04:00-sun:05:00"
     deletion_protection: bool = False
     namespace: str = "default"
     provider_config_ref: str = "default"
@@ -105,11 +107,13 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             environment_suffix=input_data.get("environment_suffix", "dev"),
             master_username=input_data.get("master_username", "postgres"),
             postgres_cluster_name=input_data.get("postgres_cluster_name", "vectordb-cluster"),
-            az_count=input_data.get("az_count", 3),
+            az_count=int(input_data.get("az_count", 3)),
             engine_version=input_data.get("engine_version", "16.1"),
             postgres_cluster_min_capacity=input_data.get("postgres_cluster_min_capacity", 0.5),
             postgres_cluster_max_capacity=input_data.get("postgres_cluster_max_capacity", 16.0),
-            backup_retention_period=input_data.get("backup_retention_period", 7),
+            backup_retention_period=int(input_data.get("backup_retention_period", 7)),
+            backup_window=input_data.get("backup_window", "03:00-04:00"),
+            maintenance_window=input_data.get("maintenance_window", "sun:04:00-sun:05:00"),
             deletion_protection=input_data.get("deletion_protection", False),
             namespace=namespace,
             provider_config_ref=input_data.get("provider_config_ref", "default"),
@@ -376,9 +380,25 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         },
                     ],
                     "backupRetentionPeriod": config.backup_retention_period,
+                    "backupWindow": config.backup_window,
+                    "preferredMaintenanceWindow": config.maintenance_window,
+                    "serverlessv2ScalingConfiguration": {
+                        "minCapacity": config.postgres_cluster_min_capacity,
+                        "maxCapacity": config.postgres_cluster_max_capacity,
+                    },
                     "deletionProtection": config.deletion_protection,
                     "skipFinalSnapshot": False,
                     "finalSnapshotIdentifier": (f"{config.postgres_cluster_name}-final-snapshot"),
+                    "copyTagsToSnapshot": True,
+                    "iamDatabaseAuthenticationEnabled": False,
+                    "networkType": "IPV4",
+                    "enableHttpEndpoint": False,
+                    "autoMinorVersionUpgrade": True,
+                    "monitoringInterval": 60,
+                    "performanceInsightsEnabled": True,
+                    "performanceInsightsRetentionPeriod": 7,
+                    "dbClusterParameterGroupName": "default.aurora-postgresql16",
+                    "dbParameterGroupName": "default.aurora-postgresql16",
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,

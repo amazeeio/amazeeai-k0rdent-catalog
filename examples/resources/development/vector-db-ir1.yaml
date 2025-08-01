@@ -2,6 +2,7 @@ apiVersion: db.amazee.ai/v1alpha1
 kind: VectorDBClaim
 metadata:
   name: vector-db-ir1
+  namespace: crossplane-system
 spec:
   # Required parameter - AWS region
   location: eu-west-1

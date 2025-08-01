@@ -11,17 +11,3 @@ spec:
   - step: generate-vectordb-infrastructure
     functionRef:
       name: vectordb-function
-    input:
-      apiVersion: vectordb.fn.crossplane.io/v1beta1
-      kind: Input
-      vpc_cidr: "10.10.0.0/16"
-      environment_suffix: "{{ .spec.envSuffix }}"
-      master_username: "{{ .spec.masterUsername }}"
-      postgres_cluster_name: "vectordb-{{ .metadata.name }}"
-      az_count: 3
-      engine_version: "{{ .spec.engineVersion }}"
-      postgres_cluster_min_capacity: "{{ .spec.minCapacity }}"
-      postgres_cluster_max_capacity: "{{ .spec.maxCapacity }}"
-      backup_retention_period: "{{ .spec.backupRetentionPeriod }}"
-      deletion_protection: "{{ .spec.deletionProtection }}"
-      provider_config_ref: "{{ .spec.providerConfigRef }}"
