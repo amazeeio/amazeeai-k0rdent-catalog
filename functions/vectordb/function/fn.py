@@ -98,7 +98,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         namespace = composite_data.get("metadata", {}).get("namespace", "default")
 
         return VectorDBConfig(
-            vpc_cidr=composite_data.get("vpc_cidr", "10.10.0.0/16"),
+            vpc_cidr=composite_data.get("vpcCidr", "10.10.0.0/16"),
             region=composite_data.get("location", "us-west-2"),
             environment_suffix=composite_data.get("envSuffix", "dev"),
             master_username=composite_data.get("masterUsername", "postgres"),

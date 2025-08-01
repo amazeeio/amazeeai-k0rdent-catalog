@@ -230,22 +230,20 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test configuration extraction from request."""
         # Given: Request with configuration
         req = fnv1.RunFunctionRequest(
-            input=resource.dict_to_struct(
-                {
-                    "vpc_cidr": "10.20.0.0/16",
-                    "environment_suffix": "test",
-                    "master_username": "admin",
-                    "postgres_cluster_name": "test-cluster",
-                    "az_count": 2,
-                }
-            ),
             observed=fnv1.State(
                 composite=fnv1.Resource(
                     resource=resource.dict_to_struct(
                         {
-                            "apiVersion": "example.crossplane.io/v1",
-                            "kind": "XR",
-                            "spec": {"region": "us-east-1"},
+                            "spec": {
+                                "apiVersion": "example.crossplane.io/v1",
+                                "kind": "XR",
+                                "location": "us-east-1",
+                                "vpcCidr": "10.20.0.0/16",
+                                "envSuffix": "test",
+                                "masterUsername": "admin",
+                                "clusterName": "test-cluster",
+                                "azCount": 2,
+                            }
                         }
                     ),
                 ),
