@@ -36,12 +36,12 @@ env:
   # The package to push, without a version tag. This publishes to the current repository's
   # GitHub Container Registry. Note that xpkg.crossplane.io is just an alias for ghcr.io, so we upload to
   # ghcr.io but this'll be pulled from xpkg.crossplane.io.
-  XPKG: ghcr.io/${{ github.repository_owner }}/function-vectordb
+  XPKG: ghcr.io/${{ github.repository }}/vectordb-function
 
   # The package version to push. We'll read it from hatch if available, otherwise use git-based versioning.
   XPKG_VERSION: ${{ inputs.version }}
   REGISTRY: ghcr.io
-  IMAGE_NAME: amazeeio/amazee-k0rdent-catalog/function-vectordb
+  IMAGE_NAME: amazeeio/amazee-k0rdent-catalog/vectordb-function
 
 jobs:
   test:
