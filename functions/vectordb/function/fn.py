@@ -283,12 +283,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "spec": {
                     "forProvider": {
                         "region": config.region,
-                        "subnetIdSelector": {
-                            "matchLabels": {
-                                "app": "vectordb",
-                                "environment": config.environment_suffix,
-                                "type": "database",
-                            },
+                        "subnetIdRef": {
+                            "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
                         },
                         "routeTableIdSelector": {
                             "matchLabels": {
