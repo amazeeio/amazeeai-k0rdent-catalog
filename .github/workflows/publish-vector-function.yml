@@ -40,10 +40,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install hatch
 
+      - name: Run Lint
+        working-directory: functions/vectordb
+        run: |
+          hatch fmt
       - name: Run tests
         working-directory: functions/vectordb
         run: |
-          hatch run test
+          hatch test
 
   build-and-push:
     needs: test
