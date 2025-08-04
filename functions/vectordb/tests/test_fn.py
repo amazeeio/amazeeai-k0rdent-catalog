@@ -282,13 +282,16 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(aurora_resource["spec"]["forProvider"]["engine"], "aurora-postgresql")
         self.assertEqual(aurora_resource["spec"]["forProvider"]["engineVersion"], "16.1")
         self.assertEqual(aurora_resource["spec"]["forProvider"]["masterUsername"], "postgres")
+        self.assertIn("masterPasswordSecretRef", aurora_resource["spec"]["forProvider"])
         self.assertEqual(
-            aurora_resource["spec"]["forProvider"]["masterUserPassword"], "test-password"
+            aurora_resource["spec"]["forProvider"]["masterPasswordSecretRef"]["name"],
+            "vectordb-password-dev",
         )
         self.assertTrue(aurora_resource["spec"]["forProvider"]["storageEncrypted"])
 
         # Check connection details
-        connection_details = aurora_resource["spec"]["connectionDetails"]
+        self.assertIn("connectionDetails", aurora_resource)
+        connection_details = aurora_resource["connectionDetails"]
         self.assertEqual(len(connection_details), 4)
 
         # Check that all required fields are present
