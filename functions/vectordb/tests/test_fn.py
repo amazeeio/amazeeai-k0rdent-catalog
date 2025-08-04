@@ -268,6 +268,8 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             master_username="postgres",
             postgres_cluster_name="vectordb-cluster",
         )
+        # Add master_password attribute (normally set by RunFunction)
+        config.master_password = "test-password"  # noqa: S105
         runner = fn.VectorDBFunctionRunner()
 
         # When: Creating Aurora cluster
@@ -280,7 +282,21 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(aurora_resource["spec"]["forProvider"]["engine"], "aurora-postgresql")
         self.assertEqual(aurora_resource["spec"]["forProvider"]["engineVersion"], "16.1")
         self.assertEqual(aurora_resource["spec"]["forProvider"]["masterUsername"], "postgres")
+        self.assertEqual(
+            aurora_resource["spec"]["forProvider"]["masterUserPassword"], "test-password"
+        )
         self.assertTrue(aurora_resource["spec"]["forProvider"]["storageEncrypted"])
+
+        # Check connection details
+        connection_details = aurora_resource["spec"]["connectionDetails"]
+        self.assertEqual(len(connection_details), 4)
+
+        # Check that all required fields are present
+        field_names = [detail["name"] for detail in connection_details]
+        self.assertIn("cluster_id", field_names)
+        self.assertIn("cluster_endpoint", field_names)
+        self.assertIn("master_username", field_names)
+        self.assertIn("master_password", field_names)
 
     def test_extract_config(self):
         """Test configuration extraction from request."""

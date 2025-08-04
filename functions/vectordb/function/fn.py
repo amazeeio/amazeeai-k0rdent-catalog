@@ -18,6 +18,8 @@ Crossplane will automatically wait for dependencies to be ready before creating 
 
 import dataclasses
 import ipaddress
+import secrets
+import string
 
 import grpc
 from crossplane.function import logging, resource, response
@@ -53,6 +55,23 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         """Create a new VectorDBFunctionRunner."""
         self.log = logging.get_logger()
 
+    def _generate_secure_password(self, length: int = 32) -> str:
+        """Generate a secure random password."""
+        # Use a mix of letters, digits, and special characters
+        characters = string.ascii_letters + string.digits + "!@#$%^&*"
+        # Ensure at least one character from each category
+        password = (
+            secrets.choice(string.ascii_lowercase)
+            + secrets.choice(string.ascii_uppercase)
+            + secrets.choice(string.digits)
+            + secrets.choice("!@#$%^&*")
+            + "".join(secrets.choice(characters) for _ in range(length - 4))
+        )
+        # Shuffle the password to avoid predictable patterns
+        password_list = list(password)
+        secrets.SystemRandom().shuffle(password_list)
+        return "".join(password_list)
+
     async def RunFunction(
         self, req: fnv1.RunFunctionRequest, _: grpc.aio.ServicerContext
     ) -> fnv1.RunFunctionResponse:
@@ -64,6 +83,10 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
 
         # Extract configuration from request
         config = self._extract_config(req)
+
+        # Always generate a secure password
+        config.master_password = self._generate_secure_password()
+        log.info("Generated secure password for Aurora cluster")
 
         # Generate CIDR blocks for subnets
         subnet_cidrs = self._calculate_subnet_cidrs(config.vpc_cidr, config.az_count)
@@ -565,6 +588,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "engineMode": "provisioned",
                     "storageEncrypted": True,
                     "masterUsername": config.master_username,
+                    "masterUserPassword": config.master_password,
                     "dbSubnetGroupNameRef": {
                         "name": f"vectordb-subnet-group-{config.environment_suffix}",
                     },
@@ -602,6 +626,26 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": f"vectordb-cluster-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
+                "connectionDetails": [
+                    {
+                        "name": "cluster_id",
+                        "type": "FromConnectionSecretKey",
+                        "key": "clusterResourceId",
+                    },
+                    {
+                        "name": "cluster_endpoint",
+                        "type": "FromConnectionSecretKey",
+                        "key": "endpoint",
+                    },
+                    {
+                        "name": "master_username",
+                        "value": config.master_username,
+                    },
+                    {
+                        "name": "master_password",
+                        "value": config.master_password,
+                    },
+                ],
             },
             "metadata": {
                 "name": config.postgres_cluster_name,
