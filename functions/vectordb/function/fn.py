@@ -1,4 +1,20 @@
-"""A Crossplane composition function for generating vector database infrastructure."""
+"""A Crossplane composition function for generating vector database infrastructure.
+
+This function creates AWS infrastructure for a vector database with proper dependency management:
+- Uses resource references (vpcIdRef, subnetIdRef, etc.) instead of label selectors for
+  reliable dependencies
+- Adds dependency annotations to ensure proper resource creation order
+- Resources are created in the following order:
+  1. VPC (no dependencies)
+  2. Internet Gateway, Subnets, Route Table, Security Group (depend on VPC)
+  3. Route Table Associations (depend on Subnets and Route Table)
+  4. IGW Route (depends on IGW and Route Table)
+  5. Security Group Rules (depend on Security Group)
+  6. Subnet Group (depends on all Subnets)
+  7. Aurora Cluster (depends on Subnet Group and Security Group)
+
+Crossplane will automatically wait for dependencies to be ready before creating dependent resources.
+"""
 
 import dataclasses
 import ipaddress
@@ -52,54 +68,54 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         # Generate CIDR blocks for subnets
         subnet_cidrs = self._calculate_subnet_cidrs(config.vpc_cidr, config.az_count)
 
-        # Create all resources
+        # Create all resources with proper dependencies
         resources = []
 
-        # 1. Create VPC
+        # 1. Create VPC (no dependencies)
         vpc_resource = self._create_vpc(config)
         resources.append(("vpc", vpc_resource))
 
-        # 2. Create Internet Gateway
+        # 2. Create Internet Gateway (depends on VPC)
         igw_resource = self._create_internet_gateway(config)
         resources.append(("internet_gateway", igw_resource))
 
-        # 3. Create database subnets
+        # 3. Create database subnets (depend on VPC)
         subnet_resources = self._create_database_subnets(config, subnet_cidrs)
         for i, subnet in enumerate(subnet_resources):
             resources.append((f"subnet_{i}", subnet))
 
-        # 4. Create route table for database subnets
+        # 4. Create route table for database subnets (depends on VPC)
         route_table_resource = self._create_database_route_table(config)
         resources.append(("route_table", route_table_resource))
 
-        # 4.1. Create route to Internet Gateway
+        # 4.1. Create route to Internet Gateway (depends on IGW and route table)
         igw_route_resource = self._create_igw_route(config)
         resources.append(("igw_route", igw_route_resource))
 
-        # 4.2. Create route table associations for each subnet
+        # 4.2. Create route table associations for each subnet (depend on subnets and route table)
         route_table_association_resources = self._create_route_table_associations(
             config, len(subnet_resources)
         )
         for i, association in enumerate(route_table_association_resources):
             resources.append((f"route_table_association_{i}", association))
 
-        # 5. Create security group
+        # 5. Create security group (depends on VPC)
         security_group_resource = self._create_database_security_group(config)
         resources.append(("security_group", security_group_resource))
 
-        # 6. Create security group rule for PostgreSQL access
+        # 6. Create security group rule for PostgreSQL access (depends on security group)
         security_group_rule_resource = self._create_security_group_rule(config)
         resources.append(("security_group_rule", security_group_rule_resource))
 
-        # 7. Create security group rule for all outbound traffic
+        # 7. Create security group rule for all outbound traffic (depends on security group)
         egress_rule_resource = self._create_egress_rule(config)
         resources.append(("egress_rule", egress_rule_resource))
 
-        # 8. Create subnet group
+        # 8. Create subnet group (depends on subnets)
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
 
-        # 9. Create Aurora cluster
+        # 9. Create Aurora cluster (depends on subnet group and security group)
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
 
@@ -192,11 +208,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "vpcIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "vpcIdRef": {
+                        "name": f"vectordb-vpc-{config.environment_suffix}",
                     },
                     "tags": {
                         "Name": f"vectordb-igw-{config.environment_suffix}",
@@ -218,6 +231,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "app": "vectordb",
                     "environment": config.environment_suffix,
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": "vpc",
+                },
             },
         }
 
@@ -233,11 +249,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "spec": {
                     "forProvider": {
                         "region": config.region,
-                        "vpcIdSelector": {
-                            "matchLabels": {
-                                "app": "vectordb",
-                                "environment": config.environment_suffix,
-                            },
+                        "vpcIdRef": {
+                            "name": f"vectordb-vpc-{config.environment_suffix}",
                         },
                         "cidrBlock": cidr,
                         "availabilityZone": az,
@@ -264,6 +277,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "environment": config.environment_suffix,
                         "type": "database",
                     },
+                    "annotations": {
+                        "crossplane.io/depends-on": "vpc",
+                    },
                 },
             }
             subnets.append(subnet)
@@ -286,12 +302,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "subnetIdRef": {
                             "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
                         },
-                        "routeTableIdSelector": {
-                            "matchLabels": {
-                                "app": "vectordb",
-                                "environment": config.environment_suffix,
-                                "type": "database",
-                            },
+                        "routeTableIdRef": {
+                            "name": f"vectordb-route-table-{config.environment_suffix}",
                         },
                     },
                     "providerConfigRef": {
@@ -309,6 +321,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "environment": config.environment_suffix,
                         "type": "database",
                     },
+                    "annotations": {
+                        "crossplane.io/depends-on": f"subnet_{i},route_table",
+                    },
                 },
             }
             associations.append(association)
@@ -324,18 +339,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "forProvider": {
                     "region": config.region,
                     "destinationCidrBlock": "0.0.0.0/0",
-                    "gatewayIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "gatewayIdRef": {
+                        "name": f"vectordb-igw-{config.environment_suffix}",
                     },
-                    "routeTableIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                            "type": "database",
-                        },
+                    "routeTableIdRef": {
+                        "name": f"vectordb-route-table-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
@@ -353,6 +361,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "environment": config.environment_suffix,
                     "type": "database",
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": "internet_gateway,route_table",
+                },
             },
         }
 
@@ -364,11 +375,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "vpcIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "vpcIdRef": {
+                        "name": f"vectordb-vpc-{config.environment_suffix}",
                     },
                     "tags": {
                         "Name": f"vectordb-route-table-{config.environment_suffix}",
@@ -392,6 +400,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "environment": config.environment_suffix,
                     "type": "database",
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": "vpc",
+                },
             },
         }
 
@@ -403,11 +414,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "vpcIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "vpcIdRef": {
+                        "name": f"vectordb-vpc-{config.environment_suffix}",
                     },
                     "tags": {
                         "Name": f"vectordb-security-group-{config.environment_suffix}",
@@ -429,6 +437,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "app": "vectordb",
                     "environment": config.environment_suffix,
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": "vpc",
+                },
             },
         }
 
@@ -446,11 +457,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "protocol": "tcp",
                     "cidrBlocks": ["0.0.0.0/0"],
                     "description": "PostgreSQL access",
-                    "securityGroupIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "securityGroupIdRef": {
+                        "name": f"vectordb-security-group-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
@@ -462,6 +470,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "labels": {
                     "app": "vectordb",
                     "environment": config.environment_suffix,
+                },
+                "annotations": {
+                    "crossplane.io/depends-on": "security_group",
                 },
             },
         }
@@ -480,11 +491,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "protocol": "-1",  # All protocols
                     "cidrBlocks": ["0.0.0.0/0"],
                     "description": "Allow all outbound traffic",
-                    "securityGroupIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "securityGroupIdRef": {
+                        "name": f"vectordb-security-group-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
@@ -497,6 +505,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "app": "vectordb",
                     "environment": config.environment_suffix,
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": "security_group",
+                },
             },
         }
 
@@ -508,13 +519,10 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "spec": {
                 "forProvider": {
                     "region": config.region,
-                    "subnetIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                            "type": "database",
-                        },
-                    },
+                    "subnetIdRefs": [
+                        {"name": f"vectordb-subnet-{i}-{config.environment_suffix}"}
+                        for i in range(config.az_count)
+                    ],
                     "description": f"Subnet group for {config.postgres_cluster_name}",
                     "tags": {
                         "Name": f"vectordb-subnet-group-{config.environment_suffix}",
@@ -536,6 +544,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "app": "vectordb",
                     "environment": config.environment_suffix,
                 },
+                "annotations": {
+                    "crossplane.io/depends-on": ",".join(
+                        [f"subnet_{i}" for i in range(config.az_count)]
+                    ),
+                },
             },
         }
 
@@ -552,18 +565,12 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "engineMode": "provisioned",
                     "storageEncrypted": True,
                     "masterUsername": config.master_username,
-                    "dbSubnetGroupNameSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
+                    "dbSubnetGroupNameRef": {
+                        "name": f"vectordb-subnet-group-{config.environment_suffix}",
                     },
-                    "vpcSecurityGroupIdSelector": {
-                        "matchLabels": {
-                            "app": "vectordb",
-                            "environment": config.environment_suffix,
-                        },
-                    },
+                    "vpcSecurityGroupIdRefs": [
+                        {"name": f"vectordb-security-group-{config.environment_suffix}"}
+                    ],
                     "backupRetentionPeriod": config.backup_retention_period,
                     "preferredBackupWindow": config.backup_window,
                     "preferredMaintenanceWindow": config.maintenance_window,
@@ -601,6 +608,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "labels": {
                     "app": "vectordb",
                     "environment": config.environment_suffix,
+                },
+                "annotations": {
+                    "crossplane.io/depends-on": "subnet_group,security_group",
                 },
             },
         }

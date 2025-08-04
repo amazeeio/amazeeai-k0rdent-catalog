@@ -174,7 +174,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(security_group_resource["kind"], "SecurityGroup")
         self.assertEqual(security_group_resource["metadata"]["name"], "vectordb-security-group-dev")
         self.assertEqual(security_group_resource["spec"]["forProvider"]["region"], "us-west-2")
-        self.assertIn("vpcIdSelector", security_group_resource["spec"]["forProvider"])
+        self.assertIn("vpcIdRef", security_group_resource["spec"]["forProvider"])
         self.assertIn("tags", security_group_resource["spec"]["forProvider"])
 
     def test_create_security_group_rule(self):
@@ -434,15 +434,13 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Check that subnets reference the VPC
         for i in range(3):
             subnet = resources[f"subnet_{i}"].resource
-            vpc_selector = subnet["spec"]["forProvider"]["vpcIdSelector"]
-            self.assertEqual(vpc_selector["matchLabels"]["app"], "vectordb")
-            self.assertEqual(vpc_selector["matchLabels"]["environment"], "dev")
+            vpc_ref = subnet["spec"]["forProvider"]["vpcIdRef"]
+            self.assertEqual(vpc_ref["name"], "vectordb-vpc-dev")
 
         # Check that security group references the VPC
         security_group = resources["security_group"].resource
-        vpc_selector = security_group["spec"]["forProvider"]["vpcIdSelector"]
-        self.assertEqual(vpc_selector["matchLabels"]["app"], "vectordb")
-        self.assertEqual(vpc_selector["matchLabels"]["environment"], "dev")
+        vpc_ref = security_group["spec"]["forProvider"]["vpcIdRef"]
+        self.assertEqual(vpc_ref["name"], "vectordb-vpc-dev")
 
     def test_cidr_allocation(self):
         """Test that CIDR blocks don't overlap."""
