@@ -16,7 +16,6 @@ This function creates AWS infrastructure for a vector database with proper depen
 Crossplane will automatically wait for dependencies to be ready before creating dependent resources.
 """
 
-import base64
 import dataclasses
 import ipaddress
 import secrets
@@ -148,11 +147,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         log.info("Creating subnet group definition")
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
-
-        # 8.1. Create secret for database password
-        log.info("Creating password secret definition")
-        password_secret_resource = self._create_password_secret(config)
-        resources.append(("password_secret", password_secret_resource))
 
         # 9. Create Aurora cluster (depends on subnet group and security group)
         log.info("Creating Aurora cluster definition")
@@ -593,25 +587,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             },
         }
 
-    def _create_password_secret(self, config: VectorDBConfig) -> dict:
-        """Create a secret for the database password."""
-        return {
-            "apiVersion": "v1",
-            "kind": "Secret",
-            "type": "Opaque",
-            "stringData": {
-                "password": base64.b64encode(config.master_password.encode()).decode(),
-            },
-            "metadata": {
-                "name": f"vectordb-password-{config.environment_suffix}",
-                "namespace": config.namespace,
-                "labels": {
-                    "app": "vectordb",
-                    "environment": config.environment_suffix,
-                },
-            },
-        }
-
     def _create_aurora_cluster(self, config: VectorDBConfig) -> dict:
         """Create Aurora PostgreSQL cluster."""
         return {
@@ -625,6 +600,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "engineMode": "provisioned",
                     "storageEncrypted": True,
                     "masterUsername": config.master_username,
+                    "autoGeneratePassword": True,
                     "masterPasswordSecretRef": {
                         "name": f"vectordb-password-{config.environment_suffix}",
                         "key": "password",
