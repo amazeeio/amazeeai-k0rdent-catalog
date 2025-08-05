@@ -352,7 +352,11 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             instance1["spec"]["forProvider"]["dbParameterGroupName"], "default.aurora-postgresql16"
         )
         self.assertTrue(instance1["spec"]["forProvider"]["autoMinorVersionUpgrade"])
-        self.assertEqual(instance1["spec"]["forProvider"]["monitoringInterval"], 0)
+        self.assertEqual(instance1["spec"]["forProvider"]["monitoringInterval"], 60)
+        self.assertEqual(
+            instance1["spec"]["forProvider"]["monitoringRoleArnRef"]["name"],
+            "test-claim-monitoring-role-dev",
+        )
 
         # Check second instance
         instance2 = aurora_instance_resources[1]
@@ -369,6 +373,10 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             self.assertIn("crossplane.io/depends-on", instance["metadata"]["annotations"])
             self.assertIn(
                 "aurora_cluster",
+                instance["metadata"]["annotations"]["crossplane.io/depends-on"],
+            )
+            self.assertIn(
+                "monitoring_role",
                 instance["metadata"]["annotations"]["crossplane.io/depends-on"],
             )
 
@@ -400,6 +408,48 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(instance["spec"]["forProvider"]["publiclyAccessible"])
             self.assertEqual(instance["spec"]["forProvider"]["promotionTier"], i)
             self.assertEqual(instance["metadata"]["name"], f"vectordb-cluster-instance-{i + 1}")
+
+    def test_create_monitoring_role(self):
+        """Test monitoring role creation."""
+        # Given: Configuration
+        config = fn.VectorDBConfig(
+            claim_name="test-claim",
+            vpc_cidr="10.10.0.0/16",
+            region="us-west-2",
+            environment_suffix="dev",
+            master_username="postgres",
+            postgres_cluster_name="vectordb-cluster",
+        )
+        runner = fn.VectorDBFunctionRunner()
+
+        # When: Creating monitoring role
+        monitoring_role_resource = runner._create_monitoring_role(config)
+
+        # Then: Should have proper configuration
+        self.assertEqual(monitoring_role_resource["apiVersion"], "iam.aws.upbound.io/v1beta1")
+        self.assertEqual(monitoring_role_resource["kind"], "Role")
+        self.assertEqual(
+            monitoring_role_resource["metadata"]["name"],
+            "test-claim-monitoring-role-dev",
+        )
+        self.assertEqual(monitoring_role_resource["spec"]["forProvider"]["region"], "us-west-2")
+
+        # Check assume role policy
+        assume_role_policy = monitoring_role_resource["spec"]["forProvider"]["assumeRolePolicy"]
+        self.assertIn("monitoring.rds.amazonaws.com", assume_role_policy)
+        self.assertIn("sts:AssumeRole", assume_role_policy)
+
+        # Check managed policy ARN
+        managed_policies = monitoring_role_resource["spec"]["forProvider"]["managedPolicyArns"]
+        self.assertEqual(len(managed_policies), 1)
+        self.assertEqual(
+            managed_policies[0],
+            "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole",
+        )
+
+        # Check metadata
+        self.assertEqual(monitoring_role_resource["metadata"]["labels"]["app"], "test-claim")
+        self.assertEqual(monitoring_role_resource["metadata"]["labels"]["environment"], "dev")
 
     def test_extract_config(self):
         """Test configuration extraction from request."""

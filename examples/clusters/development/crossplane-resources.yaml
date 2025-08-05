@@ -28,12 +28,13 @@ spec:
             function:
               packages:
                 - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
-                - "ghcr.io/amazeeio/amazeeai-k0rdent-catalog/vectordb-function:v0.0.20-crossplane"
+                - "ghcr.io/amazeeio/amazeeai-k0rdent-catalog/vectordb-function:v0.0.23-crossplane"
             provider:
               packages:
                 - "xpkg.crossplane.io/crossplane-contrib/provider-family-aws:v1.23.0" # top level provider for credential management
                 - "xpkg.crossplane.io/crossplane-contrib/provider-terraform:v0.21.0"
                 - "xpkg.crossplane.io/crossplane-contrib/provider-aws-ec2:v1.23.0" # Need EC2 for VPC management
                 - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v1.23.0" # RDS is for DB cluster creation
+                - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v1.23.0" # IAM is for DB monitoring role
 
   template: aws-standalone-cp-1-0-10

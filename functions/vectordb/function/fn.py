@@ -18,6 +18,7 @@ Crossplane will automatically wait for dependencies to be ready before creating 
 
 import dataclasses
 import ipaddress
+import json
 
 import grpc
 from crossplane.function import logging, resource, response
@@ -119,14 +120,24 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
 
-        # 9. Create Aurora cluster (depends on subnet group and security group)
+        # 9. Create monitoring role (no dependencies)
+        monitoring_role_resource = self._create_monitoring_role(config)
+        resources.append(("monitoring_role", monitoring_role_resource))
+
+        # 10. Create Aurora cluster (depends on subnet group and security group)
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
 
-        # 10. Create Aurora instances (depend on cluster, subnet group, and security group)
+        # 11. Create Aurora instances (depend on cluster, subnet group, security group,
+        # and monitoring role)
         aurora_instance_resources = self._create_aurora_instances(config)
         for i, instance in enumerate(aurora_instance_resources):
-            resources.append((f"aurora_instance_{i + 1}", instance))
+            resources.append(
+                (
+                    f"aurora_instance_{i + 1}",
+                    instance,
+                )
+            )
 
         # Add all resources to response
         for name, res in resources:
@@ -327,16 +338,16 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     },
                     "writeConnectionSecretToRef": {
                         "name": (
-                            f"{config.claim_name}-route-table-association-{i}-"
-                            f"{config.environment_suffix}"
+                            f"{config.claim_name}-route-table-association-"
+                            f"{i}-{config.environment_suffix}"
                         ),
                         "namespace": config.namespace,
                     },
                 },
                 "metadata": {
                     "name": (
-                        f"{config.claim_name}-route-table-association-{i}-"
-                        f"{config.environment_suffix}"
+                        f"{config.claim_name}-route-table-association-"
+                        f"{i}-{config.environment_suffix}"
                     ),
                     "labels": {
                         "app": config.claim_name,
@@ -668,7 +679,12 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "performanceInsightsRetentionPeriod": 7,
                         "dbParameterGroupName": "default.aurora-postgresql16",
                         "autoMinorVersionUpgrade": True,
-                        "monitoringInterval": 0,
+                        "monitoringInterval": 60,
+                        "monitoringRoleArnRef": {
+                            "name": (
+                                f"{config.claim_name}-monitoring-role-{config.environment_suffix}"
+                            ),
+                        },
                         "promotionTier": i,
                         "tags": {
                             "Name": (
@@ -693,12 +709,58 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "environment": config.environment_suffix,
                     },
                     "annotations": {
-                        "crossplane.io/depends-on": "aurora_cluster,subnet_group,security_group",
+                        "crossplane.io/depends-on": (
+                            "aurora_cluster,subnet_group,security_group,monitoring_role"
+                        ),
                     },
                 },
             }
             instances.append(instance)
         return instances
+
+    def _create_monitoring_role(self, config: VectorDBConfig) -> dict:
+        """Create IAM role for RDS enhanced monitoring."""
+        return {
+            "apiVersion": "iam.aws.upbound.io/v1beta1",
+            "kind": "Role",
+            "spec": {
+                "forProvider": {
+                    "region": config.region,
+                    "assumeRolePolicy": json.dumps(
+                        {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "",
+                                    "Effect": "Allow",
+                                    "Principal": {"Service": "monitoring.rds.amazonaws.com"},
+                                    "Action": "sts:AssumeRole",
+                                }
+                            ],
+                        }
+                    ),
+                    "description": f"Role for RDS enhanced monitoring for {config.claim_name}",
+                    "managedPolicyArns": [
+                        "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+                    ],
+                    "tags": {
+                        "Name": f"{config.claim_name}-monitoring-role-{config.environment_suffix}",
+                        "App": config.claim_name,
+                        "Environment": config.environment_suffix,
+                    },
+                },
+                "providerConfigRef": {
+                    "name": config.provider_config_ref,
+                },
+            },
+            "metadata": {
+                "name": f"{config.claim_name}-monitoring-role-{config.environment_suffix}",
+                "labels": {
+                    "app": config.claim_name,
+                    "environment": config.environment_suffix,
+                },
+            },
+        }
 
 
 # Keep the original FunctionRunner for backward compatibility
