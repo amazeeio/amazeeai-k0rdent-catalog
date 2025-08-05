@@ -96,27 +96,33 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         resources = []
 
         # 1. Create VPC (no dependencies)
+        log.info("Creating VPC definition")
         vpc_resource = self._create_vpc(config)
         resources.append(("vpc", vpc_resource))
 
         # 2. Create Internet Gateway (depends on VPC)
+        log.info("Creating Internet Gateway definition")
         igw_resource = self._create_internet_gateway(config)
         resources.append(("internet_gateway", igw_resource))
 
         # 3. Create database subnets (depend on VPC)
+        log.info("Creating database subnet definitions")
         subnet_resources = self._create_database_subnets(config, subnet_cidrs)
         for i, subnet in enumerate(subnet_resources):
             resources.append((f"subnet_{i}", subnet))
 
         # 4. Create route table for database subnets (depends on VPC)
+        log.info("Creating route table definition")
         route_table_resource = self._create_database_route_table(config)
         resources.append(("route_table", route_table_resource))
 
         # 4.1. Create route to Internet Gateway (depends on IGW and route table)
+        log.info("Creating route to Internet Gateway definition")
         igw_route_resource = self._create_igw_route(config)
         resources.append(("igw_route", igw_route_resource))
 
         # 4.2. Create route table associations for each subnet (depend on subnets and route table)
+        log.info("Creating route table associations for each subnet")
         route_table_association_resources = self._create_route_table_associations(
             config, len(subnet_resources)
         )
@@ -124,26 +130,32 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             resources.append((f"route_table_association_{i}", association))
 
         # 5. Create security group (depends on VPC)
+        log.info("Creating security group definition")
         security_group_resource = self._create_database_security_group(config)
         resources.append(("security_group", security_group_resource))
 
         # 6. Create security group rule for PostgreSQL access (depends on security group)
+        log.info("Creating security group rule for PostgreSQL access definition")
         security_group_rule_resource = self._create_security_group_rule(config)
         resources.append(("security_group_rule", security_group_rule_resource))
 
         # 7. Create security group rule for all outbound traffic (depends on security group)
+        log.info("Creating security group rule for all outbound traffic definition")
         egress_rule_resource = self._create_egress_rule(config)
         resources.append(("egress_rule", egress_rule_resource))
 
         # 8. Create subnet group (depends on subnets)
+        log.info("Creating subnet group definition")
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
 
         # 8.1. Create secret for database password
+        log.info("Creating password secret definition")
         password_secret_resource = self._create_password_secret(config)
         resources.append(("password_secret", password_secret_resource))
 
         # 9. Create Aurora cluster (depends on subnet group and security group)
+        log.info("Creating Aurora cluster definition")
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
 
@@ -587,7 +599,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "apiVersion": "v1",
             "kind": "Secret",
             "type": "Opaque",
-            "data": {
+            "stringData": {
                 "password": base64.b64encode(config.master_password.encode()).decode(),
             },
             "metadata": {
