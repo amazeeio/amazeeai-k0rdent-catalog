@@ -73,6 +73,18 @@ spec:
                 type: string
                 default: "vectordb"
                 description: "Name of the cluster"
+              instanceCount:
+                type: integer
+                default: 2
+                description: "Number of instances"
+              instanceClass:
+                type: string
+                default: "db.serverless"
+                description: "Instance class"
+              publiclyAccessible:
+                type: boolean
+                default: true
+                description: "Enable public access"
             required:
             - location
     served: true

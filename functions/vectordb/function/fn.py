@@ -45,6 +45,9 @@ class VectorDBConfig:
     deletion_protection: bool = False
     namespace: str = "default"
     provider_config_ref: str = "default"
+    instance_count: int = 2
+    instance_class: str = "db.serverless"
+    publicly_accessible: bool = True
 
 
 class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
@@ -119,6 +122,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         # 9. Create Aurora cluster (depends on subnet group and security group)
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
+
+        # 10. Create Aurora instances (depend on cluster, subnet group, and security group)
+        aurora_instance_resources = self._create_aurora_instances(config)
+        for i, instance in enumerate(aurora_instance_resources):
+            resources.append((f"aurora_instance_{i + 1}", instance))
 
         # Add all resources to response
         for name, res in resources:
@@ -631,6 +639,63 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 },
             },
         }
+
+    def _create_aurora_instances(self, config: VectorDBConfig) -> list[dict]:
+        """Create Aurora PostgreSQL cluster instances."""
+        instances = []
+        for i in range(config.instance_count):
+            instance_name = f"{config.postgres_cluster_name}-instance-{i + 1}"
+            instance = {
+                "apiVersion": "rds.aws.upbound.io/v1beta1",
+                "kind": "ClusterInstance",
+                "spec": {
+                    "forProvider": {
+                        "region": config.region,
+                        "engine": "aurora-postgresql",
+                        "engineVersion": config.engine_version,
+                        "instanceClass": config.instance_class,
+                        "publiclyAccessible": config.publicly_accessible,
+                        "clusterIdentifierRef": {
+                            "name": config.postgres_cluster_name,
+                        },
+                        "dbSubnetGroupNameRef": {
+                            "name": f"{config.claim_name}-subnet-group-{config.environment_suffix}",
+                        },
+                        "performanceInsightsEnabled": True,
+                        "performanceInsightsRetentionPeriod": 7,
+                        "dbParameterGroupName": "default.aurora-postgresql16",
+                        "autoMinorVersionUpgrade": True,
+                        "monitoringInterval": 60,
+                        "promotionTier": i,
+                        "tags": {
+                            "Name": (
+                                f"{config.claim_name}-instance-{i + 1}-{config.environment_suffix}"
+                            ),
+                            "App": config.claim_name,
+                            "Environment": config.environment_suffix,
+                        },
+                    },
+                    "providerConfigRef": {
+                        "name": config.provider_config_ref,
+                    },
+                    "writeConnectionSecretToRef": {
+                        "name": f"{config.claim_name}-instance-{i + 1}-{config.environment_suffix}",
+                        "namespace": config.namespace,
+                    },
+                },
+                "metadata": {
+                    "name": instance_name,
+                    "labels": {
+                        "app": config.claim_name,
+                        "environment": config.environment_suffix,
+                    },
+                    "annotations": {
+                        "crossplane.io/depends-on": "aurora_cluster,subnet_group,security_group",
+                    },
+                },
+            }
+            instances.append(instance)
+        return instances
 
 
 # Keep the original FunctionRunner for backward compatibility

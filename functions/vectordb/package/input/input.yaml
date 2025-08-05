@@ -61,6 +61,15 @@ spec:
           clusterName:
             type: string
             description: "Name of the cluster"
+          instanceCount:
+            type: integer
+            description: "Number of instances"
+          instanceClass:
+            type: string
+            description: "Instance class"
+          publiclyAccessible:
+            type: boolean
+            description: "Enable public access"
         required:
         - location
         - providerConfigRef

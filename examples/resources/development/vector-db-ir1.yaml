@@ -19,3 +19,6 @@ spec:
   backupWindow: "06:42-07:12"
   maintenanceWindow: "wed:04:35-wed:05:05"
   deletionProtection: true
+  instanceCount: 1
+  instanceClass: "db.serverless"
+  publiclyAccessible: true

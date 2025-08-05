@@ -29,7 +29,10 @@ class TestVectorDBConfig(unittest.TestCase):
         self.assertEqual(config.environment_suffix, "dev")
         self.assertEqual(config.master_username, "postgres")
         self.assertEqual(config.postgres_cluster_name, "vectordb-cluster")
-        self.assertEqual(config.az_count, 3)  # Default value
+        self.assertEqual(config.az_count, 3)
+        self.assertEqual(config.instance_count, 2)
+        self.assertEqual(config.instance_class, "db.serverless")
+        self.assertTrue(config.publicly_accessible)  # Default value
         self.assertEqual(config.engine_version, "16.1")  # Default value
 
 
@@ -303,6 +306,100 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(aurora_resource["spec"]["forProvider"]["storageEncrypted"])
 
         # Connection details have been removed as they are not required
+
+    def test_create_aurora_instances(self):
+        """Test Aurora cluster instances creation."""
+        # Given: Configuration
+        config = fn.VectorDBConfig(
+            claim_name="test-claim",
+            vpc_cidr="10.10.0.0/16",
+            region="us-west-2",
+            environment_suffix="dev",
+            master_username="postgres",
+            postgres_cluster_name="vectordb-cluster",
+            instance_count=2,
+            instance_class="db.serverless",
+            publicly_accessible=True,
+        )
+        runner = fn.VectorDBFunctionRunner()
+
+        # When: Creating Aurora instances
+        aurora_instance_resources = runner._create_aurora_instances(config)
+
+        # Then: Should create the correct number of instances
+        self.assertEqual(len(aurora_instance_resources), 2)
+
+        # Check first instance
+        instance1 = aurora_instance_resources[0]
+        self.assertEqual(instance1["apiVersion"], "rds.aws.upbound.io/v1beta1")
+        self.assertEqual(instance1["kind"], "ClusterInstance")
+        self.assertEqual(instance1["metadata"]["name"], "vectordb-cluster-instance-1")
+        self.assertEqual(instance1["spec"]["forProvider"]["engine"], "aurora-postgresql")
+        self.assertEqual(instance1["spec"]["forProvider"]["engineVersion"], "16.1")
+        self.assertEqual(instance1["spec"]["forProvider"]["instanceClass"], "db.serverless")
+        self.assertTrue(instance1["spec"]["forProvider"]["publiclyAccessible"])
+        self.assertEqual(instance1["spec"]["forProvider"]["promotionTier"], 0)
+        self.assertEqual(
+            instance1["spec"]["forProvider"]["clusterIdentifierRef"]["name"], "vectordb-cluster"
+        )
+        self.assertEqual(
+            instance1["spec"]["forProvider"]["dbSubnetGroupNameRef"]["name"],
+            "test-claim-subnet-group-dev",
+        )
+        self.assertTrue(instance1["spec"]["forProvider"]["performanceInsightsEnabled"])
+        self.assertEqual(instance1["spec"]["forProvider"]["performanceInsightsRetentionPeriod"], 7)
+        self.assertEqual(
+            instance1["spec"]["forProvider"]["dbParameterGroupName"], "default.aurora-postgresql16"
+        )
+        self.assertTrue(instance1["spec"]["forProvider"]["autoMinorVersionUpgrade"])
+        self.assertEqual(instance1["spec"]["forProvider"]["monitoringInterval"], 60)
+
+        # Check second instance
+        instance2 = aurora_instance_resources[1]
+        self.assertEqual(instance2["metadata"]["name"], "vectordb-cluster-instance-2")
+        self.assertEqual(instance2["spec"]["forProvider"]["promotionTier"], 1)
+        self.assertEqual(
+            instance2["spec"]["forProvider"]["clusterIdentifierRef"]["name"], "vectordb-cluster"
+        )
+
+        # Check metadata and dependencies
+        for instance in aurora_instance_resources:
+            self.assertEqual(instance["metadata"]["labels"]["app"], "test-claim")
+            self.assertEqual(instance["metadata"]["labels"]["environment"], "dev")
+            self.assertIn("crossplane.io/depends-on", instance["metadata"]["annotations"])
+            self.assertIn(
+                "aurora_cluster",
+                instance["metadata"]["annotations"]["crossplane.io/depends-on"],
+            )
+
+    def test_create_aurora_instances_custom_config(self):
+        """Test Aurora cluster instances creation with custom configuration."""
+        # Given: Configuration with custom instance settings
+        config = fn.VectorDBConfig(
+            claim_name="test-claim",
+            vpc_cidr="10.10.0.0/16",
+            region="us-west-2",
+            environment_suffix="prod",
+            master_username="postgres",
+            postgres_cluster_name="vectordb-cluster",
+            instance_count=3,
+            instance_class="db.r6g.large",
+            publicly_accessible=False,
+        )
+        runner = fn.VectorDBFunctionRunner()
+
+        # When: Creating Aurora instances
+        aurora_instance_resources = runner._create_aurora_instances(config)
+
+        # Then: Should create the correct number of instances with custom settings
+        self.assertEqual(len(aurora_instance_resources), 3)
+
+        # Check custom settings are applied
+        for i, instance in enumerate(aurora_instance_resources):
+            self.assertEqual(instance["spec"]["forProvider"]["instanceClass"], "db.r6g.large")
+            self.assertFalse(instance["spec"]["forProvider"]["publiclyAccessible"])
+            self.assertEqual(instance["spec"]["forProvider"]["promotionTier"], i)
+            self.assertEqual(instance["metadata"]["name"], f"vectordb-cluster-instance-{i + 1}")
 
     def test_extract_config(self):
         """Test configuration extraction from request."""
