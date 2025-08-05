@@ -172,7 +172,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             deletion_protection=spec_data.get("deletionProtection", False),
             namespace=namespace,
             provider_config_ref=spec_data.get("providerConfigRef", "default"),
-            instance_count=spec_data.get("instanceCount", 2),
+            instance_count=int(spec_data.get("instanceCount", 2)),
             instance_class=spec_data.get("instanceClass", "db.serverless"),
             publicly_accessible=spec_data.get("publiclyAccessible", True),
         )
