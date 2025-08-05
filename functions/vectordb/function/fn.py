@@ -621,7 +621,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     ],
                     "deletionProtection": config.deletion_protection,
                     "skipFinalSnapshot": False,
-                    "finalSnapshotIdentifier": (f"{config.postgres_cluster_name}-final-snapshot"),
+                    "finalSnapshotIdentifier": (
+                        f"{config.claim_name}-final-snapshot-{config.environment_suffix}"
+                    ),
                     "copyTagsToSnapshot": True,
                     "iamDatabaseAuthenticationEnabled": False,
                     "enableHttpEndpoint": False,

@@ -31,7 +31,7 @@ crossplane:
   function:
     packages:
       - "xpkg.crossplane.io/crossplane-contrib/function-patch-and-transform:v0.8.2"
-      - "ghcr.io/amazeeio/amazeeai-k0rdent-catalog/vectordb-function:v0.0.2-crossplane"
+      - "ghcr.io/amazeeio/amazeeai-k0rdent-catalog/vectordb-function:v0.1.0"
 
   # Provider packages to install
   provider:
@@ -40,6 +40,7 @@ crossplane:
       - "xpkg.crossplane.io/crossplane-contrib/provider-terraform:v0.21.0"
       - "xpkg.crossplane.io/crossplane-contrib/provider-aws-ec2:v1.23.0" # Need EC2 for VPC management
       - "xpkg.crossplane.io/crossplane-contrib/provider-aws-rds:v1.23.0" # RDS is for DB cluster creation
+      - "xpkg.crossplane.io/crossplane-contrib/provider-aws-iam:v1.23.0" # IAM is for DB monitoring role
 
   # Feature flags - only stable beta features enabled
   args:
