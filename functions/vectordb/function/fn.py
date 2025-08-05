@@ -643,28 +643,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "namespace": config.namespace,
                 },
             },
-            "connectionDetails": [
-                {
-                    "name": "cluster_id",
-                    "type": "FromConnectionSecretKey",
-                    "fromConnectionSecretKey": "clusterResourceId",
-                },
-                {
-                    "name": "cluster_endpoint",
-                    "type": "FromConnectionSecretKey",
-                    "fromConnectionSecretKey": "endpoint",
-                },
-                {
-                    "name": "master_username",
-                    "type": "FromConnectionSecretKey",
-                    "fromConnectionSecretKey": "username",
-                },
-                {
-                    "name": "master_password",
-                    "type": "FromConnectionSecretKey",
-                    "fromConnectionSecretKey": "password",
-                },
-            ],
             "metadata": {
                 "name": config.postgres_cluster_name,
                 "labels": {

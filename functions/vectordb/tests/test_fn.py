@@ -289,17 +289,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         )
         self.assertTrue(aurora_resource["spec"]["forProvider"]["storageEncrypted"])
 
-        # Check connection details
-        self.assertIn("connectionDetails", aurora_resource)
-        connection_details = aurora_resource["connectionDetails"]
-        self.assertEqual(len(connection_details), 4)
-
-        # Check that all required fields are present
-        field_names = [detail["name"] for detail in connection_details]
-        self.assertIn("cluster_id", field_names)
-        self.assertIn("cluster_endpoint", field_names)
-        self.assertIn("master_username", field_names)
-        self.assertIn("master_password", field_names)
+        # Connection details have been removed as they are not required
 
     def test_extract_config(self):
         """Test configuration extraction from request."""
