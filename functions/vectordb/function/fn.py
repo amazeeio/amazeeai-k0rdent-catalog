@@ -18,8 +18,6 @@ Crossplane will automatically wait for dependencies to be ready before creating 
 
 import dataclasses
 import ipaddress
-import secrets
-import string
 
 import grpc
 from crossplane.function import logging, resource, response
@@ -31,6 +29,7 @@ from crossplane.function.proto.v1 import run_function_pb2_grpc as grpcv1
 class VectorDBConfig:
     """Configuration for vector database infrastructure."""
 
+    claim_name: str
     vpc_cidr: str
     region: str
     environment_suffix: str
@@ -55,23 +54,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         """Create a new VectorDBFunctionRunner."""
         self.log = logging.get_logger()
 
-    def _generate_secure_password(self, length: int = 32) -> str:
-        """Generate a secure random password."""
-        # Use a mix of letters, digits, and special characters
-        characters = string.ascii_letters + string.digits + "!@#$%^&*"
-        # Ensure at least one character from each category
-        password = (
-            secrets.choice(string.ascii_lowercase)
-            + secrets.choice(string.ascii_uppercase)
-            + secrets.choice(string.digits)
-            + secrets.choice("!@#$%^&*")
-            + "".join(secrets.choice(characters) for _ in range(length - 4))
-        )
-        # Shuffle the password to avoid predictable patterns
-        password_list = list(password)
-        secrets.SystemRandom().shuffle(password_list)
-        return "".join(password_list)
-
     async def RunFunction(
         self, req: fnv1.RunFunctionRequest, _: grpc.aio.ServicerContext
     ) -> fnv1.RunFunctionResponse:
@@ -84,10 +66,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         # Extract configuration from request
         config = self._extract_config(req)
 
-        # Always generate a secure password
-        config.master_password = self._generate_secure_password()
-        log.info("Generated secure password for Aurora cluster")
-
         # Generate CIDR blocks for subnets
         subnet_cidrs = self._calculate_subnet_cidrs(config.vpc_cidr, config.az_count)
 
@@ -95,33 +73,27 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         resources = []
 
         # 1. Create VPC (no dependencies)
-        log.info("Creating VPC definition")
         vpc_resource = self._create_vpc(config)
         resources.append(("vpc", vpc_resource))
 
         # 2. Create Internet Gateway (depends on VPC)
-        log.info("Creating Internet Gateway definition")
         igw_resource = self._create_internet_gateway(config)
         resources.append(("internet_gateway", igw_resource))
 
         # 3. Create database subnets (depend on VPC)
-        log.info("Creating database subnet definitions")
         subnet_resources = self._create_database_subnets(config, subnet_cidrs)
         for i, subnet in enumerate(subnet_resources):
             resources.append((f"subnet_{i}", subnet))
 
         # 4. Create route table for database subnets (depends on VPC)
-        log.info("Creating route table definition")
         route_table_resource = self._create_database_route_table(config)
         resources.append(("route_table", route_table_resource))
 
         # 4.1. Create route to Internet Gateway (depends on IGW and route table)
-        log.info("Creating route to Internet Gateway definition")
         igw_route_resource = self._create_igw_route(config)
         resources.append(("igw_route", igw_route_resource))
 
         # 4.2. Create route table associations for each subnet (depend on subnets and route table)
-        log.info("Creating route table associations for each subnet")
         route_table_association_resources = self._create_route_table_associations(
             config, len(subnet_resources)
         )
@@ -129,27 +101,22 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             resources.append((f"route_table_association_{i}", association))
 
         # 5. Create security group (depends on VPC)
-        log.info("Creating security group definition")
         security_group_resource = self._create_database_security_group(config)
         resources.append(("security_group", security_group_resource))
 
         # 6. Create security group rule for PostgreSQL access (depends on security group)
-        log.info("Creating security group rule for PostgreSQL access definition")
         security_group_rule_resource = self._create_security_group_rule(config)
         resources.append(("security_group_rule", security_group_rule_resource))
 
         # 7. Create security group rule for all outbound traffic (depends on security group)
-        log.info("Creating security group rule for all outbound traffic definition")
         egress_rule_resource = self._create_egress_rule(config)
         resources.append(("egress_rule", egress_rule_resource))
 
         # 8. Create subnet group (depends on subnets)
-        log.info("Creating subnet group definition")
         subnet_group_resource = self._create_subnet_group(config)
         resources.append(("subnet_group", subnet_group_resource))
 
         # 9. Create Aurora cluster (depends on subnet group and security group)
-        log.info("Creating Aurora cluster definition")
         aurora_resource = self._create_aurora_cluster(config)
         resources.append(("aurora_cluster", aurora_resource))
 
@@ -164,10 +131,13 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
         composite_data = resource.struct_to_dict(req.observed.composite.resource)
         spec_data = composite_data["spec"]
 
-        # Extract namespace from the composite resource
-        namespace = composite_data.get("metadata", {}).get("namespace", "default")
+        # Extract namespace and name from the composite resource
+        metadata = composite_data.get("metadata", {})
+        namespace = metadata.get("namespace", "default")
+        claim_name = metadata.get("name", "vectordb")
 
         return VectorDBConfig(
+            claim_name=claim_name,
             vpc_cidr=spec_data.get("vpcCidr", "10.10.0.0/16"),
             region=spec_data.get("location", "us-west-2"),
             environment_suffix=spec_data.get("envSuffix", "dev"),
@@ -213,8 +183,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "enableDnsHostnames": True,
                     "enableDnsSupport": True,
                     "tags": {
-                        "Name": f"vectordb-vpc-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-vpc-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                     },
                 },
@@ -222,14 +192,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-vpc-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-vpc-{config.environment_suffix}",
+                "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
             },
@@ -244,11 +214,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "forProvider": {
                     "region": config.region,
                     "vpcIdRef": {
-                        "name": f"vectordb-vpc-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                     },
                     "tags": {
-                        "Name": f"vectordb-igw-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-igw-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                     },
                 },
@@ -256,14 +226,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-igw-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-igw-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-igw-{config.environment_suffix}",
+                "name": f"{config.claim_name}-igw-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -285,14 +255,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "forProvider": {
                         "region": config.region,
                         "vpcIdRef": {
-                            "name": f"vectordb-vpc-{config.environment_suffix}",
+                            "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                         },
                         "cidrBlock": cidr,
                         "availabilityZone": az,
                         "mapPublicIpOnLaunch": True,
                         "tags": {
-                            "Name": f"vectordb-subnet-{i}-{config.environment_suffix}",
-                            "App": "vectordb",
+                            "Name": f"{config.claim_name}-subnet-{i}-{config.environment_suffix}",
+                            "App": config.claim_name,
                             "Environment": config.environment_suffix,
                             "Type": "database",
                         },
@@ -301,14 +271,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "name": config.provider_config_ref,
                     },
                     "writeConnectionSecretToRef": {
-                        "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-subnet-{i}-{config.environment_suffix}",
                         "namespace": config.namespace,
                     },
                 },
                 "metadata": {
-                    "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-subnet-{i}-{config.environment_suffix}",
                     "labels": {
-                        "app": "vectordb",
+                        "app": config.claim_name,
                         "environment": config.environment_suffix,
                         "type": "database",
                     },
@@ -335,24 +305,30 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "forProvider": {
                         "region": config.region,
                         "subnetIdRef": {
-                            "name": f"vectordb-subnet-{i}-{config.environment_suffix}",
+                            "name": f"{config.claim_name}-subnet-{i}-{config.environment_suffix}",
                         },
                         "routeTableIdRef": {
-                            "name": f"vectordb-route-table-{config.environment_suffix}",
+                            "name": f"{config.claim_name}-route-table-{config.environment_suffix}",
                         },
                     },
                     "providerConfigRef": {
                         "name": config.provider_config_ref,
                     },
                     "writeConnectionSecretToRef": {
-                        "name": f"vectordb-route-table-association-{i}-{config.environment_suffix}",
+                        "name": (
+                            f"{config.claim_name}-route-table-association-{i}-"
+                            f"{config.environment_suffix}"
+                        ),
                         "namespace": config.namespace,
                     },
                 },
                 "metadata": {
-                    "name": f"vectordb-route-table-association-{i}-{config.environment_suffix}",
+                    "name": (
+                        f"{config.claim_name}-route-table-association-{i}-"
+                        f"{config.environment_suffix}"
+                    ),
                     "labels": {
-                        "app": "vectordb",
+                        "app": config.claim_name,
                         "environment": config.environment_suffix,
                         "type": "database",
                     },
@@ -375,24 +351,24 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "region": config.region,
                     "destinationCidrBlock": "0.0.0.0/0",
                     "gatewayIdRef": {
-                        "name": f"vectordb-igw-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-igw-{config.environment_suffix}",
                     },
                     "routeTableIdRef": {
-                        "name": f"vectordb-route-table-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-route-table-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-igw-route-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-igw-route-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-igw-route-{config.environment_suffix}",
+                "name": f"{config.claim_name}-igw-route-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                     "type": "database",
                 },
@@ -411,11 +387,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "forProvider": {
                     "region": config.region,
                     "vpcIdRef": {
-                        "name": f"vectordb-vpc-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                     },
                     "tags": {
-                        "Name": f"vectordb-route-table-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-route-table-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                         "Type": "database",
                     },
@@ -424,14 +400,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-route-table-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-route-table-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-route-table-{config.environment_suffix}",
+                "name": f"{config.claim_name}-route-table-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                     "type": "database",
                 },
@@ -450,11 +426,11 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "forProvider": {
                     "region": config.region,
                     "vpcIdRef": {
-                        "name": f"vectordb-vpc-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-vpc-{config.environment_suffix}",
                     },
                     "tags": {
-                        "Name": f"vectordb-security-group-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-security-group-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                     },
                 },
@@ -462,14 +438,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-security-group-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-security-group-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-security-group-{config.environment_suffix}",
+                "name": f"{config.claim_name}-security-group-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -493,7 +469,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "cidrBlocks": ["0.0.0.0/0"],
                     "description": "PostgreSQL access",
                     "securityGroupIdRef": {
-                        "name": f"vectordb-security-group-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-security-group-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
@@ -501,9 +477,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 },
             },
             "metadata": {
-                "name": f"vectordb-postgres-ingress-{config.environment_suffix}",
+                "name": f"{config.claim_name}-postgres-ingress-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -527,7 +503,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "cidrBlocks": ["0.0.0.0/0"],
                     "description": "Allow all outbound traffic",
                     "securityGroupIdRef": {
-                        "name": f"vectordb-security-group-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-security-group-{config.environment_suffix}",
                     },
                 },
                 "providerConfigRef": {
@@ -535,9 +511,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 },
             },
             "metadata": {
-                "name": f"vectordb-egress-all-{config.environment_suffix}",
+                "name": f"{config.claim_name}-egress-all-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -555,13 +531,13 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                 "forProvider": {
                     "region": config.region,
                     "subnetIdRefs": [
-                        {"name": f"vectordb-subnet-{i}-{config.environment_suffix}"}
+                        {"name": f"{config.claim_name}-subnet-{i}-{config.environment_suffix}"}
                         for i in range(config.az_count)
                     ],
                     "description": f"Subnet group for {config.postgres_cluster_name}",
                     "tags": {
-                        "Name": f"vectordb-subnet-group-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-subnet-group-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                     },
                 },
@@ -569,14 +545,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-subnet-group-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-subnet-group-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
-                "name": f"vectordb-subnet-group-{config.environment_suffix}",
+                "name": f"{config.claim_name}-subnet-group-{config.environment_suffix}",
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -602,15 +578,15 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "masterUsername": config.master_username,
                     "autoGeneratePassword": True,
                     "masterPasswordSecretRef": {
-                        "name": f"vectordb-password-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-password-{config.environment_suffix}",
                         "namespace": config.namespace,
                         "key": "password",
                     },
                     "dbSubnetGroupNameRef": {
-                        "name": f"vectordb-subnet-group-{config.environment_suffix}",
+                        "name": f"{config.claim_name}-subnet-group-{config.environment_suffix}",
                     },
                     "vpcSecurityGroupIdRefs": [
-                        {"name": f"vectordb-security-group-{config.environment_suffix}"}
+                        {"name": f"{config.claim_name}-security-group-{config.environment_suffix}"}
                     ],
                     "backupRetentionPeriod": config.backup_retention_period,
                     "preferredBackupWindow": config.backup_window,
@@ -631,8 +607,8 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "performanceInsightsRetentionPeriod": 7,
                     "dbClusterParameterGroupName": "default.aurora-postgresql16",
                     "tags": {
-                        "Name": f"vectordb-cluster-{config.environment_suffix}",
-                        "App": "vectordb",
+                        "Name": f"{config.claim_name}-cluster-{config.environment_suffix}",
+                        "App": config.claim_name,
                         "Environment": config.environment_suffix,
                     },
                 },
@@ -640,14 +616,14 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "name": config.provider_config_ref,
                 },
                 "writeConnectionSecretToRef": {
-                    "name": f"vectordb-cluster-{config.environment_suffix}",
+                    "name": f"{config.claim_name}-cluster-{config.environment_suffix}",
                     "namespace": config.namespace,
                 },
             },
             "metadata": {
                 "name": config.postgres_cluster_name,
                 "labels": {
-                    "app": "vectordb",
+                    "app": config.claim_name,
                     "environment": config.environment_suffix,
                 },
                 "annotations": {
@@ -660,5 +636,3 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
 # Keep the original FunctionRunner for backward compatibility
 class FunctionRunner(VectorDBFunctionRunner):
     """Backward compatibility wrapper."""
-
-    pass

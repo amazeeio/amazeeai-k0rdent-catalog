@@ -15,6 +15,7 @@ class TestVectorDBConfig(unittest.TestCase):
     def test_config_creation(self):
         """Test that VectorDBConfig can be created with required fields."""
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -22,6 +23,7 @@ class TestVectorDBConfig(unittest.TestCase):
             postgres_cluster_name="vectordb-cluster",
         )
 
+        self.assertEqual(config.claim_name, "test-claim")
         self.assertEqual(config.vpc_cidr, "10.10.0.0/16")
         self.assertEqual(config.region, "us-west-2")
         self.assertEqual(config.environment_suffix, "dev")
@@ -67,6 +69,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test VPC resource creation."""
         # Given: VPC configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -81,7 +84,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should return properly formatted VPC resource
         self.assertEqual(vpc_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(vpc_resource["kind"], "VPC")
-        self.assertEqual(vpc_resource["metadata"]["name"], "vectordb-vpc-dev")
+        self.assertEqual(vpc_resource["metadata"]["name"], "test-claim-vpc-dev")
         self.assertEqual(vpc_resource["spec"]["forProvider"]["cidrBlock"], "10.10.0.0/16")
         self.assertEqual(vpc_resource["spec"]["forProvider"]["region"], "us-west-2")
 
@@ -89,6 +92,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test Internet Gateway creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -103,13 +107,14 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should return IGW with proper configuration
         self.assertEqual(igw_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(igw_resource["kind"], "InternetGateway")
-        self.assertEqual(igw_resource["metadata"]["name"], "vectordb-igw-dev")
+        self.assertEqual(igw_resource["metadata"]["name"], "test-claim-igw-dev")
         self.assertEqual(igw_resource["spec"]["forProvider"]["region"], "us-west-2")
 
     def test_create_database_subnets(self):
         """Test database subnet creation."""
         # Given: Configuration and CIDR blocks
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -128,7 +133,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         for i, subnet in enumerate(subnet_resources):
             self.assertEqual(subnet["apiVersion"], "ec2.aws.upbound.io/v1beta1")
             self.assertEqual(subnet["kind"], "Subnet")
-            self.assertEqual(subnet["metadata"]["name"], f"vectordb-subnet-{i}-dev")
+            self.assertEqual(subnet["metadata"]["name"], f"test-claim-subnet-{i}-dev")
             self.assertEqual(subnet["spec"]["forProvider"]["cidrBlock"], cidrs[i])
             self.assertEqual(subnet["spec"]["forProvider"]["region"], "us-west-2")
             self.assertTrue(subnet["spec"]["forProvider"]["mapPublicIpOnLaunch"])
@@ -137,6 +142,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test route table creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -151,13 +157,14 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should have proper configuration
         self.assertEqual(route_table_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(route_table_resource["kind"], "RouteTable")
-        self.assertEqual(route_table_resource["metadata"]["name"], "vectordb-route-table-dev")
+        self.assertEqual(route_table_resource["metadata"]["name"], "test-claim-route-table-dev")
         self.assertEqual(route_table_resource["spec"]["forProvider"]["region"], "us-west-2")
 
     def test_create_security_group(self):
         """Test security group creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -172,7 +179,9 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should have basic security group configuration
         self.assertEqual(security_group_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(security_group_resource["kind"], "SecurityGroup")
-        self.assertEqual(security_group_resource["metadata"]["name"], "vectordb-security-group-dev")
+        self.assertEqual(
+            security_group_resource["metadata"]["name"], "test-claim-security-group-dev"
+        )
         self.assertEqual(security_group_resource["spec"]["forProvider"]["region"], "us-west-2")
         self.assertIn("vpcIdRef", security_group_resource["spec"]["forProvider"])
         self.assertIn("tags", security_group_resource["spec"]["forProvider"])
@@ -181,6 +190,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test security group rule creation for PostgreSQL access."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -196,7 +206,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(security_group_rule_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(security_group_rule_resource["kind"], "SecurityGroupRule")
         self.assertEqual(
-            security_group_rule_resource["metadata"]["name"], "vectordb-postgres-ingress-dev"
+            security_group_rule_resource["metadata"]["name"], "test-claim-postgres-ingress-dev"
         )
         self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["type"], "ingress")
         self.assertEqual(security_group_rule_resource["spec"]["forProvider"]["fromPort"], 5432)
@@ -213,6 +223,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test security group egress rule creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -227,7 +238,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should have proper egress rule configuration
         self.assertEqual(egress_rule_resource["apiVersion"], "ec2.aws.upbound.io/v1beta1")
         self.assertEqual(egress_rule_resource["kind"], "SecurityGroupRule")
-        self.assertEqual(egress_rule_resource["metadata"]["name"], "vectordb-egress-all-dev")
+        self.assertEqual(egress_rule_resource["metadata"]["name"], "test-claim-egress-all-dev")
         self.assertEqual(egress_rule_resource["spec"]["forProvider"]["type"], "egress")
         self.assertEqual(egress_rule_resource["spec"]["forProvider"]["fromPort"], 0)
         self.assertEqual(egress_rule_resource["spec"]["forProvider"]["toPort"], 0)
@@ -241,6 +252,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         """Test subnet group creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -255,13 +267,14 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         # Then: Should reference all subnet IDs
         self.assertEqual(subnet_group_resource["apiVersion"], "rds.aws.upbound.io/v1beta1")
         self.assertEqual(subnet_group_resource["kind"], "SubnetGroup")
-        self.assertEqual(subnet_group_resource["metadata"]["name"], "vectordb-subnet-group-dev")
+        self.assertEqual(subnet_group_resource["metadata"]["name"], "test-claim-subnet-group-dev")
         self.assertEqual(subnet_group_resource["spec"]["forProvider"]["region"], "us-west-2")
 
     def test_create_aurora_cluster(self):
         """Test Aurora cluster creation."""
         # Given: Configuration
         config = fn.VectorDBConfig(
+            claim_name="test-claim",
             vpc_cidr="10.10.0.0/16",
             region="us-west-2",
             environment_suffix="dev",
@@ -285,7 +298,7 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
         self.assertIn("masterPasswordSecretRef", aurora_resource["spec"]["forProvider"])
         self.assertEqual(
             aurora_resource["spec"]["forProvider"]["masterPasswordSecretRef"]["name"],
-            "vectordb-password-dev",
+            "test-claim-password-dev",
         )
         self.assertTrue(aurora_resource["spec"]["forProvider"]["storageEncrypted"])
 
