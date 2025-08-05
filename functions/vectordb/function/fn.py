@@ -725,7 +725,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             "kind": "Role",
             "spec": {
                 "forProvider": {
-                    "region": config.region,
                     "assumeRolePolicy": json.dumps(
                         {
                             "Version": "2012-10-17",

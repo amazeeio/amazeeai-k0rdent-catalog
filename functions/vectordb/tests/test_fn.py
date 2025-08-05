@@ -432,7 +432,6 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             monitoring_role_resource["metadata"]["name"],
             "test-claim-monitoring-role-dev",
         )
-        self.assertEqual(monitoring_role_resource["spec"]["forProvider"]["region"], "us-west-2")
 
         # Check assume role policy
         assume_role_policy = monitoring_role_resource["spec"]["forProvider"]["assumeRolePolicy"]
