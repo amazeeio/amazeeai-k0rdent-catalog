@@ -88,26 +88,6 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: db.amazee.ai/v1alpha1
-    kind: VectorDBClaim
-  mode: Pipeline
-  pipeline:
-  - step: generate-vectordb-infrastructure
-    functionRef:
-      name: amazeeio-amazeeai-k0rdent-catalog-vectordb-function
-    input:
-      apiVersion: db.amazee.ai/v1alpha1
-      kind: Input
-      location: "us-east-1"
-      providerConfigRef: "aws-creds"
-      envSuffix: "dev"
----
-apiVersion: apiextensions.crossplane.io/v1
-kind: Composition
-metadata:
-  name: vectordb-infrastructure
-spec:
-  compositeTypeRef:
-    apiVersion: db.amazee.ai/v1alpha1
     kind: VectorDB
   mode: Pipeline
   pipeline:
@@ -116,7 +96,7 @@ spec:
       name: amazeeio-amazeeai-k0rdent-catalog-vectordb-function
     input:
       apiVersion: db.amazee.ai/v1alpha1
-      kind: Input
+      kind: VectorDBInput
       location: "{{ .spec.location }}"
       providerConfigRef: "{{ .spec.providerConfigRef }}"
       envSuffix: "{{ .spec.envSuffix }}"

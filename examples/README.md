@@ -59,29 +59,26 @@ For the global provisioning system, it is recommended that you use a managed dat
 The LiteLLM system is self contained, but requires credentials for connecting to configured Amazon Bedrock LLMs. If you are deploying your own models locally, then the AWS credentials may not be necessary.
 
 ## AWS (or other) resources
-Resources such as DBs can be created using crossplane and terraform. You can either deploy crossplane as a standalong cluster
+Resources such as DBs can be created using crossplane and terraform. You can either deploy crossplane as a standalone cluster
 ```bash
 kubectl apply -f clusters/development/crossplane-resources.yaml
 ```
 Or you can add the service to another cluster following the standard K0rdent practices.
 
-Once you have crossplane installed, ensure that the various XRDs are created
+Once you have crossplane installed, you will need to set up the compositions. For vector DBs that looks like
 ```bash
-kubectl get xrds -A
-```
-If they are not, you may have to manually apply the template
-```bash
-kubectl apply -f charts/crossplane/templates/aws-vector-db.yaml
+kubectl apply -f resources/development/aws-vector-db-comp.yaml
 ```
 You can then create a resource by applying the appropriate claim - so for vector DBs
 ```bash
 kubectl apply -f resources/development/vector-db-ir1.yaml
 ```
-This will run terraform to create the resources defined in `terraform/vector-db` with the specified configuration. You can update the terraform by modifying the claim yaml and re-applying it. To delete (safely via terraform) the resources, you use
+This will use crossplane providers to create the resources defined in `functions/vectordb` with the specified configuration. You can update the configuration by modifying the claim yaml and re-applying it. To delete (safely via crossplane) the resources, you use
 ```bash
 kubectl delete vectordb-claims.db.amazee.ai vector-db-ir1
 ```
 To get the DB password from the kubernetes secret, you can use
 ```bash
-kubectl get secret vector-db-connection -n crossplane-system --template={{.data.vectordb_master_passwords}} | base64 --decode
+kubectl get secret vectordb-password-dev --template={{.data.password}} | base64 --decode
 ```
+All the other values for connecting to the RDS cluster are in the `vectordb-cluster-dev` secret.
