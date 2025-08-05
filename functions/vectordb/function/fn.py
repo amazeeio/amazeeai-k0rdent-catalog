@@ -603,6 +603,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                     "autoGeneratePassword": True,
                     "masterPasswordSecretRef": {
                         "name": f"vectordb-password-{config.environment_suffix}",
+                        "namespace": config.namespace,
                         "key": "password",
                     },
                     "dbSubnetGroupNameRef": {
