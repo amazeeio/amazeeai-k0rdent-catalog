@@ -1,0 +1,13 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: vectordb
+spec:
+  compositeTypeRef:
+    apiVersion: db.amazee.ai/v1alpha1
+    kind: VectorDBClaim
+  mode: Pipeline
+  pipeline:
+  - step: generate-vectordb-infrastructure
+    functionRef:
+      name: vectordb-function

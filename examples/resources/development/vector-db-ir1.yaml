@@ -1,0 +1,24 @@
+apiVersion: db.amazee.ai/v1alpha1
+kind: VectorDBClaim
+metadata:
+  name: vector-db-ir1
+  namespace: crossplane-system
+spec:
+  # Required parameter - AWS region
+  location: eu-west-1
+
+  providerConfigRef: "aws-creds"
+
+  # Optional parameters with defaults
+  envSuffix: "dev"
+  engineVersion: "16.6"
+  minCapacity: 0.5
+  maxCapacity: 16
+  masterUsername: "postgres"
+  backupRetentionPeriod: 7
+  backupWindow: "06:42-07:12"
+  maintenanceWindow: "wed:04:35-wed:05:05"
+  deletionProtection: false
+  instanceCount: 1
+  instanceClass: "db.serverless"
+  publiclyAccessible: true
