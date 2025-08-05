@@ -161,6 +161,9 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
             deletion_protection=spec_data.get("deletionProtection", False),
             namespace=namespace,
             provider_config_ref=spec_data.get("providerConfigRef", "default"),
+            instance_count=spec_data.get("instanceCount", 2),
+            instance_class=spec_data.get("instanceClass", "db.serverless"),
+            publicly_accessible=spec_data.get("publiclyAccessible", True),
         )
 
     def _calculate_subnet_cidrs(self, vpc_cidr: str, az_count: int) -> list[str]:
@@ -665,7 +668,6 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "performanceInsightsRetentionPeriod": 7,
                         "dbParameterGroupName": "default.aurora-postgresql16",
                         "autoMinorVersionUpgrade": True,
-                        "monitoringInterval": 60,
                         "promotionTier": i,
                         "tags": {
                             "Name": (

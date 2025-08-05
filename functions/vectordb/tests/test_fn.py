@@ -352,7 +352,6 @@ class TestVectorDBFunctionRunner(unittest.IsolatedAsyncioTestCase):
             instance1["spec"]["forProvider"]["dbParameterGroupName"], "default.aurora-postgresql16"
         )
         self.assertTrue(instance1["spec"]["forProvider"]["autoMinorVersionUpgrade"])
-        self.assertEqual(instance1["spec"]["forProvider"]["monitoringInterval"], 60)
 
         # Check second instance
         instance2 = aurora_instance_resources[1]
