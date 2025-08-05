@@ -668,6 +668,7 @@ class VectorDBFunctionRunner(grpcv1.FunctionRunnerService):
                         "performanceInsightsRetentionPeriod": 7,
                         "dbParameterGroupName": "default.aurora-postgresql16",
                         "autoMinorVersionUpgrade": True,
+                        "monitoringInterval": 0,
                         "promotionTier": i,
                         "tags": {
                             "Name": (
