@@ -33,11 +33,14 @@ spec:
                 service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
       - name: cert-manager
         namespace: cert-manager
-        template: cert-manager-1-17-1
+        template: cert-manager-1-18-2
         values: |
-          crds:
-            enabled: true
-          foo: bar
+          cert-manager:
+            crds:
+              enabled: true
+            config:
+              featureGates:
+                ACMEHTTP01IngressPathTypeExact: "false"
       - name: litellm
         namespace: litellm
         template: litellm-0.4.0

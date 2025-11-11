@@ -36,8 +36,9 @@ spec:
         namespace: cert-manager
         template: cert-manager-1-17-1
         values: |
-          crds:
-            enabled: true
+          cert-manager:
+            crds:
+              enabled: true
       - name: amazee-ai
         namespace: amazee-ai
         template: amazee-ai-0.1.0

@@ -7,10 +7,15 @@ litellm-helm:
     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
     aws_region_name: os.environ/AWS_REGION
 
-
-  image:
-    repository: ghcr.io/amazeeio/litellm-database
-    tag: "main"
+  # Until such time as there is a better alternative
+  postgresql:
+    global:
+      security:
+        allowInsecureImages: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: "17.4.0-debian-12-r9"
 
   envVars:
       AWS_ACCESS_KEY_ID: "fillme"
@@ -45,7 +50,6 @@ litellm-helm:
         litellm_params: *titan-embed-text-v2
 
     litellm_settings:
-      callbacks: ["prometheus"]
       drop_params: true
 
     general_settings:
@@ -84,7 +88,10 @@ prometheus:
       scrape_interval: 15s
       static_configs:
         - targets: ['litellm:4000']
-
+    - job_name: 'ingress-nginx'
+      scrape_interval: 15s
+      static_configs:
+        - targets: ['ingress-nginx-controller-metrics.ingress-nginx.svc.cluster.local:10254']
 
 
 grafana:

@@ -2,10 +2,10 @@ apiVersion: v2
 name: litellm
 description: A Helm chart to refer the official litellm helm chart
 type: application
-version: 0.4.0
+version: 0.4.1
 dependencies:
   - name: litellm-helm
-    version: 0.1.642
+    version: 0.1.812
     repository: oci://ghcr.io/berriai
     condition: litellm-helm.enabled
   - name: prometheus
