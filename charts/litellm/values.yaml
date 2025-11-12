@@ -84,10 +84,6 @@ prometheus:
   prometheus-pushgateway:
     enabled: false
   extraScrapeConfigs: |
-    - job_name: 'litellm'
-      scrape_interval: 15s
-      static_configs:
-        - targets: ['litellm:4000']
     - job_name: 'ingress-nginx'
       scrape_interval: 15s
       static_configs:
