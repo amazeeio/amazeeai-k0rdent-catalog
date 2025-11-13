@@ -12,7 +12,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: {{ .Values.gateway.name }}
-  namespace: {{ .Values.gateway.namespace }}
+  namespace: {{ .Release.Namespace }}
   annotations:
     cert-manager.io/issuer: letsencrypt-prod
     cert-manager.io/issuer-kind: Issuer
@@ -76,7 +76,7 @@ metadata:
 spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
-    namespace: {{ .Values.gateway.namespace }}
+    namespace: {{ .Release.Namespace }}
     sectionName: https-grafana
   hostnames:
   - {{ .Values.gateway.grafanaHost }}
@@ -95,7 +95,7 @@ metadata:
 spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
-    namespace: {{ .Values.gateway.namespace }}
+    namespace: {{ .Release.Namespace }}
     sectionName: https-prometheus
   hostnames:
   - {{ .Values.gateway.prometheusHost }}
@@ -114,7 +114,7 @@ metadata:
 spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
-    namespace: {{ .Values.gateway.namespace }}
+    namespace: {{ .Release.Namespace }}
     sectionName: https-litellm
   hostnames:
   - {{ .Values.host }}

@@ -4,9 +4,8 @@ host: litellm.example.com
 gateway:
   enabled: false
   name: default-gateway
-  namespace: envoy-gateway-system
-  gatewayClassName: eg
-  tlsSecretName: wildcard-tls
+  namespace: litellm # defaults everything into the same namespace for simplicity
+  gatewayClassName: envoygateway
   grafanaHost: grafana.example.com
   prometheusHost: prometheus.example.com
 
