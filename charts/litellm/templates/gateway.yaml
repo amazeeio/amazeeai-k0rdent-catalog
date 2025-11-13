@@ -13,6 +13,10 @@ kind: Gateway
 metadata:
   name: {{ .Values.gateway.name }}
   namespace: {{ .Values.gateway.namespace }}
+  annotations:
+    cert-manager.io/issuer: letsencrypt-prod
+    cert-manager.io/issuer-kind: Issuer
+    cert-manager.io/issuer-group: cert-manager.io
 spec:
   gatewayClassName: {{ .Values.gateway.gatewayClassName }}
   listeners:
@@ -22,7 +26,8 @@ spec:
     allowedRoutes:
       namespaces:
         from: All
-  - name: https
+  - name: https-litellm
+    hostname: {{ .Values.host }}
     protocol: HTTPS
     port: 443
     allowedRoutes:
@@ -32,7 +37,31 @@ spec:
       mode: Terminate
       certificateRefs:
       - kind: Secret
-        name: {{ .Values.gateway.tlsSecretName }}
+        name: litellm-tls
+  - name: https-grafana
+    hostname: {{ .Values.gateway.grafanaHost }}
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: grafana-tls
+  - name: https-prometheus
+    hostname: {{ .Values.gateway.prometheusHost }}
+    protocol: HTTPS
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: All
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - kind: Secret
+        name: prometheus-tls
 {{- end }}
 ---
 {{- if and .Values.gateway.enabled .Values.grafana.enabled }}
@@ -45,7 +74,7 @@ spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
     namespace: {{ .Values.gateway.namespace }}
-    sectionName: https
+    sectionName: https-grafana
   hostnames:
   - {{ .Values.gateway.grafanaHost }}
   rules:
@@ -64,7 +93,7 @@ spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
     namespace: {{ .Values.gateway.namespace }}
-    sectionName: https
+    sectionName: https-prometheus
   hostnames:
   - {{ .Values.gateway.prometheusHost }}
   rules:
@@ -83,7 +112,7 @@ spec:
   parentRefs:
   - name: {{ .Values.gateway.name }}
     namespace: {{ .Values.gateway.namespace }}
-    sectionName: https
+    sectionName: https-litellm
   hostnames:
   - {{ .Values.host }}
   rules:
