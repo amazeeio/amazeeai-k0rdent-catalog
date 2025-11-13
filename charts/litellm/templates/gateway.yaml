@@ -19,6 +19,10 @@ metadata:
     cert-manager.io/issuer-group: cert-manager.io
 spec:
   gatewayClassName: {{ .Values.gateway.gatewayClassName }}
+  infrastructure:
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
   listeners:
   - name: http
     protocol: HTTP
