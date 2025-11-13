@@ -38,6 +38,7 @@ spec:
       certificateRefs:
       - kind: Secret
         name: litellm-tls
+        namespace: {{ .Release.Namespace }}
   - name: https-grafana
     hostname: {{ .Values.gateway.grafanaHost }}
     protocol: HTTPS
@@ -50,6 +51,7 @@ spec:
       certificateRefs:
       - kind: Secret
         name: grafana-tls
+        namespace: {{ .Release.Namespace }}
   - name: https-prometheus
     hostname: {{ .Values.gateway.prometheusHost }}
     protocol: HTTPS
@@ -62,6 +64,7 @@ spec:
       certificateRefs:
       - kind: Secret
         name: prometheus-tls
+        namespace: {{ .Release.Namespace }}
 {{- end }}
 ---
 {{- if and .Values.gateway.enabled .Values.grafana.enabled }}
