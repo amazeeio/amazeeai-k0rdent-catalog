@@ -8,6 +8,30 @@ spec:
 {{- end }}
 ---
 {{- if .Values.gateway.enabled }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: {{ .Values.gateway.name }}-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: {{ .Values.gateway.replicas | default 2 }}
+        pod:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      gateway.envoyproxy.io/owning-gateway-name: {{ .Values.gateway.name }}
+                  topologyKey: kubernetes.io/hostname
+{{- end }}
+---
+{{- if .Values.gateway.enabled }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -20,6 +44,10 @@ metadata:
 spec:
   gatewayClassName: {{ .Values.gateway.gatewayClassName }}
   infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: {{ .Values.gateway.name }}-config
     annotations:
       service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
       service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
