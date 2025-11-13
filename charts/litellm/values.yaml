@@ -1,5 +1,15 @@
 host: litellm.example.com
 
+# Gateway API configuration (alternative to Ingress)
+gateway:
+  enabled: false
+  name: default-gateway
+  namespace: envoy-gateway-system
+  gatewayClassName: eg
+  tlsSecretName: wildcard-tls
+  grafanaHost: grafana.example.com
+  prometheusHost: prometheus.example.com
+
 litellm-helm:
   enabled: true
   image:
