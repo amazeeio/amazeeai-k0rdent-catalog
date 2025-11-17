@@ -43,7 +43,7 @@ spec:
                 ACMEHTTP01IngressPathTypeExact: "false"
       - name: litellm
         namespace: litellm
-        template: litellm-0.4.0
+        template: litellm-0.4.12
         values: |
           host: litellm.amazee-ai.local
           litellm-helm:

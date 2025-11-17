@@ -2,9 +2,8 @@ host: litellm.example.com
 
 # Gateway API configuration (alternative to Ingress)
 gateway:
-  enabled: false
+  enabled: false # Default is still ingress
   name: default-gateway
-  namespace: litellm # defaults everything into the same namespace for simplicity
   gatewayClassName: envoygateway
   replicas: 2  # Number of envoy proxy replicas (should match worker node count)
   grafanaHost: grafana.example.com
