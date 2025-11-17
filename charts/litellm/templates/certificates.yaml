@@ -1,0 +1,43 @@
+{{- if .Values.gateway.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: litellm-tls
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: litellm-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: Issuer
+  dnsNames:
+  - {{ .Values.host }}
+---
+{{- if .Values.grafana.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana-tls
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: grafana-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: Issuer
+  dnsNames:
+  - {{ .Values.gateway.grafanaHost }}
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: prometheus-tls
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: prometheus-tls
+  issuerRef:
+    name: letsencrypt-prod
+    kind: Issuer
+  dnsNames:
+  - {{ .Values.gateway.prometheusHost }}
+{{- end }}

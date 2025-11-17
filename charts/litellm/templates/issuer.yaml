@@ -13,6 +13,15 @@ spec:
       name: letsencrypt-prod
     # Enable the HTTP-01 challenge provider
     solvers:
+{{- if .Values.gateway.enabled }}
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: {{ .Values.gateway.name }}
+                namespace: {{ .Release.Namespace }}
+                kind: Gateway
+{{- else }}
       - http01:
           ingress:
             ingressClassName: nginx
+{{- end }}

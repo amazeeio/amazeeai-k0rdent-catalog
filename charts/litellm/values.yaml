@@ -1,16 +1,32 @@
 host: litellm.example.com
 
+# Gateway API configuration (alternative to Ingress)
+gateway:
+  enabled: false # Default is still ingress
+  name: default-gateway
+  gatewayClassName: envoygateway
+  replicas: 2  # Number of envoy proxy replicas (should match worker node count)
+  grafanaHost: grafana.example.com
+  prometheusHost: prometheus.example.com
+
 litellm-helm:
   enabled: true
+  image:
+    tag: "main-stable"
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
     aws_region_name: os.environ/AWS_REGION
 
-
-  image:
-    repository: ghcr.io/amazeeio/litellm-database
-    tag: "main"
+  # Until such time as there is a better alternative
+  postgresql:
+    global:
+      security:
+        allowInsecureImages: true
+    image:
+      registry: docker.io
+      repository: bitnamilegacy/postgresql
+      tag: "17.4.0-debian-12-r9"
 
   envVars:
       AWS_ACCESS_KEY_ID: "fillme"
@@ -45,7 +61,6 @@ litellm-helm:
         litellm_params: *titan-embed-text-v2
 
     litellm_settings:
-      callbacks: ["prometheus"]
       drop_params: true
 
     general_settings:
@@ -80,11 +95,10 @@ prometheus:
   prometheus-pushgateway:
     enabled: false
   extraScrapeConfigs: |
-    - job_name: 'litellm'
+    - job_name: 'ingress-nginx'
       scrape_interval: 15s
       static_configs:
-        - targets: ['litellm:4000']
-
+        - targets: ['ingress-nginx-controller-metrics.ingress-nginx.svc.cluster.local:10254']
 
 
 grafana:
