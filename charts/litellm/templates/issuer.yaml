@@ -18,7 +18,7 @@ spec:
           gatewayHTTPRoute:
             parentRefs:
               - name: {{ .Values.gateway.name }}
-                namespace: {{ .Release.namespace }}
+                namespace: {{ .Release.Namespace }}
                 kind: Gateway
 {{- else }}
       - http01:
