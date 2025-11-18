@@ -3,10 +3,10 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: litellm-tls
+  name: litellm-gateway-tls
   namespace: {{ .Release.Namespace }}
 spec:
-  secretName: litellm-tls
+  secretName: litellm-gateway-tls
   issuerRef:
     name: letsencrypt-prod
     kind: Issuer
@@ -17,10 +17,10 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: grafana-tls
+  name: grafana-gateway-tls
   namespace: {{ .Release.Namespace }}
 spec:
-  secretName: grafana-tls
+  secretName: grafana-gateway-tls
   issuerRef:
     name: letsencrypt-prod
     kind: Issuer
@@ -31,10 +31,10 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: prometheus-tls
+  name: prometheus-gateway-tls
   namespace: {{ .Release.Namespace }}
 spec:
-  secretName: prometheus-tls
+  secretName: prometheus-gateway-tls
   issuerRef:
     name: letsencrypt-prod
     kind: Issuer
