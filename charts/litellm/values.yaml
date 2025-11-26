@@ -70,15 +70,15 @@ litellm-helm:
 
 
 prometheus:
+  # RBAC configuration - required for cross-namespace pod discovery (e.g., envoy-gateway-system)
+  rbac:
+    create: true
   server:
     global:
       external_labels:
         cluster: example.com
     namespaces:
       - litellm  # This will be the default namespace, can be overridden during helm install
-  # RBAC configuration - required for cross-namespace pod discovery (e.g., envoy-gateway-system)
-  rbac:
-    create: true
     ingress:
       enabled: false
       ingressClassName: nginx
