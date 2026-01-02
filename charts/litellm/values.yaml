@@ -9,6 +9,10 @@ gateway:
   grafanaHost: grafana.example.com
   prometheusHost: prometheus.example.com
 
+externalSecrets:
+  enabled: false
+  clusterSecretStore: external-secrets-keystore-secret-store
+
 litellm-helm:
   enabled: true
   image:
@@ -28,12 +32,15 @@ litellm-helm:
       repository: bitnamilegacy/postgresql
       tag: "17.4.0-debian-12-r9"
 
-  envVars:
-      AWS_ACCESS_KEY_ID: "fillme"
-      AWS_SECRET_ACCESS_KEY: "fillme"
-      AWS_REGION: "fillme"
-      UI_USERNAME: admin
-      UI_PASSWORD: fillme
+  # environmentSecrets:
+  #   - litellm-external-secret
+  # envVars:
+  #     AWS_ACCESS_KEY_ID: fillme
+  #     AWS_SECRET_ACCESS_KEY: fillme
+  #     AWS_REGION: fillme
+  #     UI_USERNAME: admin
+  #     UI_PASSWORD: fillme
+
   proxy_config:
     model_list:
 
