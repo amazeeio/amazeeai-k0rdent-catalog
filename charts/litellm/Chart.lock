@@ -1,6 +1,12 @@
 dependencies:
 - name: litellm-helm
   repository: oci://ghcr.io/berriai
-  version: 0.1.642
-digest: sha256:f78784153dfcf1a1fb81b7afd69a94d5c5a98d008cdf3d88915d4a9424e08eae
-generated: "2025-03-22T23:10:11.828409-04:00"
+  version: 0.1.812
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 27.8.0
+- name: grafana
+  repository: https://grafana.github.io/helm-charts
+  version: 8.12.0
+digest: sha256:2bbadb3168948bb65955fae4be9265fc8690d090ec5a61c80b4ee8a9eef40190
+generated: "2026-01-02T09:06:06.384294+01:00"
