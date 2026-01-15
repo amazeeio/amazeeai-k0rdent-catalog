@@ -52,14 +52,6 @@ litellm-helm:
         litellm_params: &claude-3-5-sonnet
           model: bedrock/anthropic.claude-3-5-sonnet-20240620-v1:0
           <<: *aws-api-key
-      - model_name: claude-4-5-sonnet
-        litellm_params: &claude-4-5-sonnet
-          model: bedrock/anthropic.claude-sonnet-4-5-20250929-v1:0
-          <<: *aws-api-key
-      - model_name: claude-4-5-opus
-        litellm_params: &claude-4-5-opus
-          model: bedrock/anthropic.claude-opus-4-5-20251101-v1:0
-          <<: *aws-api-key
       - model_name: titan-embed-text-v2:0
         litellm_params: &titan-embed-text-v2
           model: amazon.titan-embed-text-v2:0
