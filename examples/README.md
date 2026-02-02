@@ -18,7 +18,7 @@ kubectl get servicetemplates -A
 ```
 Once the service templates show as ready, make modifications and apply the child cluster deployments
 ```bash
-kubectl apply -f clusters/deveopment/amazeeai-ch2.yaml # Set up LiteLLM
+kubectl apply -f clusters/development/amazeeai-ch2.yaml # Set up LiteLLM
 kubectl apply -f clusters/development/amazeeai-global.yaml # Set up provisioning and dashboarding
 ```
 For the global provisioning system, it is recommended that you use a managed database service, but if you wish to deploy one as part of the k0rdent setup you can do so in the `postgresql` block by setting `enabled: true` and defining your preferred values. For more details on the amazee.ai helm chart, see [the dedicated README](https://github.com/amazeeio/amazee.ai/tree/main/helm).
