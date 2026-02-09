@@ -1,0 +1,13 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: ingress-nginx
+  namespace: kcm-system
+  labels:
+    k0rdent.mirantis.com/managed: "true"
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/resource-policy: keep
+spec:
+  interval: 10m0s
+  url: https://kubernetes.github.io/ingress-nginx
