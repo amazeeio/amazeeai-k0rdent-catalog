@@ -1,0 +1,6 @@
+dependencies:
+- name: kcm
+  repository: oci://ghcr.io/k0rdent/kcm/charts
+  version: 1.2.0
+digest: sha256:f99622a3ddb1bba7f51c460690bc477cc6eae13319f1d5f12a6fbd665a5498d7
+generated: "2026-02-09T15:27:17.018805+01:00"
