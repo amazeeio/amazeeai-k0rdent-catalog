@@ -73,3 +73,11 @@ k0s: # @schema description: K0s parameters; type: object; additionalProperties: 
     calico: # @schema description: Calico-specific configuration; type: object; additionalProperties: true
       mode: ipip # @schema description: Calico network mode; type: string; examples: [ipip, vxlan, never]; minLength: 1
   files: [] # @schema description: Specifies extra files to be passed to user_data upon creation; type: array; item: object
+
+controlPlaneLoadBalancer:
+  healthCheckProtocol: TCP
+  securityGroup:
+    ingressRules: []  # no default IPs, empty array
+
+network:
+  additionalControlPlaneIngressRules: []  
