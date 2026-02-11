@@ -80,4 +80,5 @@ controlPlaneLoadBalancer:
     ingressRules: []  # no default IPs, empty array
 
 network:
-  additionalControlPlaneIngressRules: []  
+  additionalControlPlaneIngressRules: []
+  
