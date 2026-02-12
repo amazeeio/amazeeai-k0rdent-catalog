@@ -23,12 +23,11 @@ kcmValues:
     enabled: true
 
 projectsveltosValues:
-  config: 
-    addonController:
-      controller:
-        additionalVolumes:
-          - name: helm-cache
-            emptyDir: {}
-        additionalVolumeMounts:
-          - name: helm-cache
-            mountPath: /home/nonroot/.cache
+  addonController:
+    controller:
+      additionalVolumeMounts:
+      - mountPath: /home/nonroot/.cache
+        name: helm-cache
+      additionalVolumes:
+      - emptyDir: {}
+        name: helm-cache
