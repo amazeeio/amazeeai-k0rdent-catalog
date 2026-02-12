@@ -1,0 +1,34 @@
+k0rdentVersion: "1.2.0"
+capiTemplate: "cluster-api-1-0-5"
+sveltosTemplate: "projectsveltos-0-57-2"
+
+providers:
+  - name: cluster-api-provider-k0sproject-k0smotron
+    template: cluster-api-provider-k0sproject-k0smotron-1-0-6
+  - name: cluster-api-provider-aws
+    template: cluster-api-provider-aws-1-0-4
+  - name: projectsveltos
+    template: projectsveltos-0-57-2
+
+kcmValues:
+  admissionWebhook:
+    enabled: true
+  cluster-api-operator:
+    enabled: true
+  controller:
+    createAccessManagement: false
+    createManagement: false
+    createRelease: false
+  velero:
+    enabled: true
+
+projectsveltosValues:
+  config: 
+    addonController:
+      controller:
+        additionalVolumes:
+          - name: helm-cache
+            emptyDir: {}
+        additionalVolumeMounts:
+          - name: helm-cache
+            mountPath: /home/nonroot/.cache
