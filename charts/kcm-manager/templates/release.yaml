@@ -1,0 +1,16 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: Release
+metadata:
+  name: kcm-release-{{ .Values.k0rdentVersion | replace "." "-" }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    k0rdent.mirantis.com/component: kcm
+spec:
+  version: {{ .Values.k0rdentVersion | quote }}
+  capi:
+    template: {{ .Values.capiTemplate | quote }}
+  kcm:
+    template: kcm-{{ .Values.k0rdentVersion | replace "." "-" }}
+  providers:
+    {{- toYaml .Values.providers | nindent 4 }}

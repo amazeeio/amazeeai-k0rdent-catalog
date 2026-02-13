@@ -1,0 +1,17 @@
+apiVersion: k0rdent.mirantis.com/v1beta1
+kind: Management
+metadata:
+  name: kcm
+  labels:
+      k0rdent.mirantis.com/component: kcm
+spec:
+  release: {{ printf "kcm-release-%s" (.Values.k0rdentVersion | replace "." "-") | quote }}
+  core:
+    kcm:
+      config:
+        {{- toYaml .Values.kcmValues | nindent 8 }}
+    capi: {}
+  providers:
+    - name: cluster-api-provider-k0sproject-k0smotron
+    - name: cluster-api-provider-aws
+    - name: projectsveltos
