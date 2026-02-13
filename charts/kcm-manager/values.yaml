@@ -1,6 +1,8 @@
 k0rdentVersion: "1.2.0"
+
+managementVersion: "1.2.0"
+
 capiTemplate: "cluster-api-1-0-5"
-sveltosTemplate: "projectsveltos-0-57-2"
 
 providers:
   - name: cluster-api-provider-k0sproject-k0smotron

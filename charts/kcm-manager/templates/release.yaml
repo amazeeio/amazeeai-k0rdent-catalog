@@ -12,7 +12,5 @@ spec:
     template: {{ .Values.capiTemplate | quote }}
   kcm:
     template: kcm-{{ .Values.k0rdentVersion | replace "." "-" }}
-  projectsveltos:
-    template: {{ .Values.sveltosTemplate | quote }}
   providers:
     {{- toYaml .Values.providers | nindent 4 }}
