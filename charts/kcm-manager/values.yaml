@@ -21,13 +21,3 @@ kcmValues:
     createRelease: false
   velero:
     enabled: true
-
-projectsveltosValues:
-  addonController:
-    controller:
-      additionalVolumeMounts:
-      - mountPath: /home/nonroot/.cache
-        name: helm-cache
-      additionalVolumes:
-      - emptyDir: {}
-        name: helm-cache
