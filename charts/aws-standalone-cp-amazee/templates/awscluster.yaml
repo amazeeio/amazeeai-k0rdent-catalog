@@ -13,6 +13,17 @@ spec:
     name: {{ .Values.clusterIdentity.name }}
   controlPlaneLoadBalancer:
     healthCheckProtocol: TCP
+    {{- if .Values.controlPlaneLoadBalancer.allowedCIDRs }}
+    ingressRules:
+      - description: "Restricted VPN Access to API Server"
+        protocol: tcp
+        fromPort: 6443
+        toPort: 6443
+        cidrBlocks:
+          {{- range .Values.controlPlaneLoadBalancer.allowedCIDRs }}
+          - {{ . | quote }}
+          {{- end }}
+    {{- end }}
   network:
     additionalControlPlaneIngressRules:
       - description: "k0s controller join API"

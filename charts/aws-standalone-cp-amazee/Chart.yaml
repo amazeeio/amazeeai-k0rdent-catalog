@@ -1,5 +1,5 @@
 apiVersion: v2
-name: aws-standalone-amazee
+name: aws-standalone-cp-amazee
 description: |
   A KCM template to deploy a k0s cluster on AWS with bootstrapped control plane nodes.
 type: application
@@ -17,4 +17,3 @@ annotations:
   cluster.x-k8s.io/bootstrap-k0sproject-k0smotron: v1beta1
   cluster.x-k8s.io/control-plane-k0sproject-k0smotron: v1beta1
   cluster.x-k8s.io/infrastructure-aws: v1beta2
- 

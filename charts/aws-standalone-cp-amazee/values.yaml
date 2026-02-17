@@ -34,6 +34,9 @@ clusterIdentity: # @schema description: A reference to an identity to be used wh
   name: "" # @schema description: Name of the identity; type: string; required: true
   kind: "AWSClusterStaticIdentity" # @schema description: Kind of the identity; type: string; required: true
 
+controlPlaneLoadBalancer:
+  allowedCIDRs: []
+
 # AWS machines parameters
 controlPlane: # @schema description: The configuration of the control plane machines; type: object
   amiID: "" # @schema description: The ID of Amazon Machine Image; type: string
@@ -73,11 +76,3 @@ k0s: # @schema description: K0s parameters; type: object; additionalProperties: 
     calico: # @schema description: Calico-specific configuration; type: object; additionalProperties: true
       mode: ipip # @schema description: Calico network mode; type: string; examples: [ipip, vxlan, never]; minLength: 1
   files: [] # @schema description: Specifies extra files to be passed to user_data upon creation; type: array; item: object
-
-controlPlaneLoadBalancer:
-  healthCheckProtocol: TCP
-  securityGroup:
-    ingressRules: []  # no default IPs, empty array
-
-network:
-  additionalControlPlaneIngressRules: []
