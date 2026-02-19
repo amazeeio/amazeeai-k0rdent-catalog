@@ -14,10 +14,10 @@ spec:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   controlPlaneRef:
-    apiGroup: controlplane.cluster.x-k8s.io
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: K0sControlPlane
     name: {{ include "k0scontrolplane.name" .  }}
   infrastructureRef:
-    apiGroup: infrastructure.cluster.x-k8s.io
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: AWSCluster
     name: {{ include "cluster.name" . }}
