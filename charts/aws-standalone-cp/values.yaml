@@ -34,8 +34,10 @@ clusterIdentity: # @schema description: A reference to an identity to be used wh
   name: "" # @schema description: Name of the identity; type: string; required: true
   kind: "AWSClusterStaticIdentity" # @schema description: Kind of the identity; type: string; required: true
 
+# --- START CUSTOMIZATION: Do not remove ---
 controlPlaneLoadBalancer:
   allowedCIDRs: []
+# --- END CUSTOMIZATION ---
 
 # AWS machines parameters
 controlPlane: # @schema description: The configuration of the control plane machines; type: object
