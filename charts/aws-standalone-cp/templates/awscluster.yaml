@@ -13,6 +13,7 @@ spec:
     name: {{ .Values.clusterIdentity.name }}
   controlPlaneLoadBalancer:
     healthCheckProtocol: TCP
+    # --- START CUSTOMIZATION: Do not remove ---
     {{- if .Values.controlPlaneLoadBalancer.allowedCIDRs }}
     ingressRules:
       - description: "Restricted VPN Access to API Server"
@@ -24,6 +25,7 @@ spec:
           - {{ . | quote }}
           {{- end }}
     {{- end }}
+    # --- END CUSTOMIZATION ---
   network:
     additionalControlPlaneIngressRules:
       - description: "k0s controller join API"
