@@ -1,6 +1,6 @@
 k0rdentVersion: "1.7.0"
 
-managementVersion: "1.2.0"
+managementVersion: "1.7.0"
 
 capiTemplate: "cluster-api-1-1-2"
 
