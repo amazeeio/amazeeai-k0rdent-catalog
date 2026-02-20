@@ -5,7 +5,7 @@ metadata:
   labels:
       k0rdent.mirantis.com/component: kcm
 spec:
-  release: {{ printf "kcm-release-%s" (.Values.k0rdentVersion | replace "." "-") | quote }}
+  release: {{ printf "kcm-release-%s" (.Values.managementVersion | replace "." "-") | quote }}
   core:
     kcm:
       config:

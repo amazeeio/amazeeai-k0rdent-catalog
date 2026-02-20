@@ -1,16 +1,16 @@
-k0rdentVersion: "1.2.0"
+k0rdentVersion: "1.7.0"
 
-managementVersion: "1.2.0"
+managementVersion: "1.7.0"
 
-capiTemplate: "cluster-api-1-0-5"
+capiTemplate: "cluster-api-1-1-2"
 
 providers:
   - name: cluster-api-provider-k0sproject-k0smotron
-    template: cluster-api-provider-k0sproject-k0smotron-1-0-6
+    template: cluster-api-provider-k0sproject-k0smotron-1-0-16
   - name: cluster-api-provider-aws
-    template: cluster-api-provider-aws-1-0-4
+    template: cluster-api-provider-aws-1-0-12
   - name: projectsveltos
-    template: projectsveltos-0-57-2
+    template: projectsveltos-1-1-1
 
 kcmValues:
   admissionWebhook:
@@ -21,5 +21,7 @@ kcmValues:
     createAccessManagement: false
     createManagement: false
     createRelease: false
+    logger:
+      log-level: "error"
   velero:
     enabled: true
