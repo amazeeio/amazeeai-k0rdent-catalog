@@ -5,6 +5,7 @@ metadata:
   annotations:
     # Temporary fix to address https://github.com/k0sproject/k0smotron/issues/911
     machineset.cluster.x-k8s.io/skip-preflight-checks: "ControlPlaneIsStable"
+    {{- include "aws-standalone.keepPolicy" . | nindent 4 }}
 spec:
   clusterName: {{ include "cluster.name" . }}
   replicas: {{ .Values.workersNumber }}
