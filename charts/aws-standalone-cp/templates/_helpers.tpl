@@ -2,13 +2,35 @@
     {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/*
+--- START CUSTOMIZATION: Do not remove ---
+Control Plane AWSMachineTemplate Name (Chart Version + CP Values Hash)
+*/}}
 {{- define "awsmachinetemplate.controlplane.name" -}}
-    {{- include "cluster.name" . }}-cp-mt
+    {{- /* Truncate the cluster name to 40 chars to guarantee room for the version and hash */ -}}
+    {{- $clusterName := include "cluster.name" . | trunc 40 | trimSuffix "-" -}}
+    {{- $version := replace "." "-" .Chart.Version -}}
+    {{- $valuesHash := toYaml .Values.controlPlane.machineSpec | sha256sum | trunc 8 -}}
+    {{- printf "%s-cp-mt-%s-%s" $clusterName $version $valuesHash | trunc 63 | trimSuffix "-" -}}
 {{- end }}
+{{/*
+--- END CUSTOMIZATION ---
+*/}}
 
+{{/*
+--- START CUSTOMIZATION: Do not remove ---
+Worker AWSMachineTemplate Name (Chart Version + CP Values Hash)
+*/}}
 {{- define "awsmachinetemplate.worker.name" -}}
-    {{- include "cluster.name" . }}-worker-mt
+    {{- /* Truncate the cluster name to 40 chars to guarantee room for the version and hash */ -}}
+    {{- $clusterName := include "cluster.name" . | trunc 40 | trimSuffix "-" -}}
+    {{- $version := replace "." "-" .Chart.Version -}}
+    {{- $valuesHash := toYaml .Values.worker | sha256sum | trunc 8 -}}
+    {{- printf "%s-worker-mt-%s-%s" $clusterName $version $valuesHash | trunc 63 | trimSuffix "-" -}}
 {{- end }}
+{{/*
+--- END CUSTOMIZATION ---
+*/}}
 
 {{- define "k0scontrolplane.name" -}}
     {{- include "cluster.name" . }}-cp
