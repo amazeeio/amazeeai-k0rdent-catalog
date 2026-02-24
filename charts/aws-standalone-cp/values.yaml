@@ -45,7 +45,9 @@ controlPlane: # @schema description: The configuration of the control plane mach
   iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io # @schema description: A name of an IAM instance profile to assign to the instance; type: string; required: true
   instanceType: "" # @schema description: The type of instance to create. Example: m4.xlarge; type: string; required: true
   rootVolumeSize: 8 # @schema description: Specifies size (in Gi) of the root storage device. Must be greater than the image snapshot size or 8 (whichever is greater); type: integer; minimum: 8
+  # --- START CUSTOMIZATION: Do not remove ---
   rootVolumeEncryption: true # @schema description: Sets encryption for the root volume as true by default.
+  # --- END CUSTOMIZATION ---
   imageLookup: # @schema description: AMI lookup parameters; type: object
     format: "amzn2-ami-hvm*-gp2" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
     org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
@@ -63,7 +65,9 @@ worker: # @schema description: The configuration of the worker machines; type: o
   iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io # @schema description: A name of an IAM instance profile to assign to the instance; type: string; required: true
   instanceType: "" # @schema description: The type of instance to create. Example: m4.xlarge; type: string; required: true
   rootVolumeSize: 8 # @schema description: Specifies size (in Gi) of the root storage device. Must be greater than the image snapshot size or 8 (whichever is greater); type: integer; minimum: 8
+  # --- START CUSTOMIZATION: Do not remove ---
   rootVolumeEncryption: true # @schema description: Sets encryption for the root volume as true by default.
+  # --- END CUSTOMIZATION ---
   imageLookup: # @schema description: AMI lookup parameters; type: object
     format: "amzn2-ami-hvm*-gp2" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
     org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
