@@ -30,6 +30,6 @@ spec:
       uncompressedUserData: {{ .Values.worker.uncompressedUserData }}
       # --- START CUSTOMIZATION: Do not remove ---
       instanceMetadataOptions:
-        httpTokens: {{ .Values.controlPlane.instanceMetadataOptions.httpTokens }}
-        httpPutResponseHopLimit: {{ .Values.controlPlane.instanceMetadataOptions.httpPutResponseHopLimit }}
+        httpTokens: {{ .Values.worker.instanceMetadataOptions.httpTokens }}
+        httpPutResponseHopLimit: {{ .Values.worker.instanceMetadataOptions.httpPutResponseHopLimit }}
       # --- END CUSTOMIZATION ---
