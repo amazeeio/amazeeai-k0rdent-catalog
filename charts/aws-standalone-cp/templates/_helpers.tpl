@@ -37,3 +37,15 @@
     config.yaml
     {{- end -}}
 {{- end }}
+
+{{/*
+--- START CUSTOMIZATION: Do not remove ---
+Helm resource-policy annotation for underlying CAPI resources.
+This ensures CAPI's cascading deletion handles infrastructure cleanup, not Helm.
+*/}}
+{{- define "aws-standalone.keepPolicy" -}}
+{{- if default true .Values.keepResources -}}
+helm.sh/resource-policy: keep
+{{- end -}}
+{{- end -}}
+{{/* --- END CUSTOMIZATION */}}
