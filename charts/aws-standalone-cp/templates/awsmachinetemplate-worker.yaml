@@ -26,6 +26,7 @@ spec:
         size: {{ .Values.worker.rootVolumeSize }}
         # --- START CUSTOMIZATION: Do not remove ---
         encrypted: {{ .Values.worker.rootVolumeEncryption }}
+        type: {{ .Values.worker.rootVolumeType }}
         # --- END CUSTOMIZATION ---
       {{- with .Values.worker.nonRootVolumes }}
       nonRootVolumes: {{- toYaml . | nindent 8 }}
