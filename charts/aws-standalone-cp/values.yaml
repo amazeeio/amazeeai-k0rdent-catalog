@@ -41,12 +41,9 @@ controlPlaneLoadBalancer:
 
 # AWS machines parameters
 controlPlane: # @schema description: The configuration of the control plane machines; type: object
+  amiID: "" # @schema description: The ID of Amazon Machine Image; type: string
   iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io # @schema description: A name of an IAM instance profile to assign to the instance; type: string; required: true
   instanceType: "" # @schema description: The type of instance to create. Example: m4.xlarge; type: string; required: true
-  imageLookup: # @schema description: AMI lookup parameters; type: object
-    format: "al2023-ami-2023.*-x86_64" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
-    org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
-    baseOS: "" # @schema description: The name of the base operating system to use for image lookup the AMI is not set; type: string
   uncompressedUserData: false # @schema description: Specify whether the user data is gzip-compressed before it is sent to ec2 instance. Cloud-init has built-in support for gzip-compressed user data. User data stored in aws secret manager is always gzip-compressed; type: boolean
   nonRootVolumes: [] # @schema title: Non-root storage volumes; description: Configuration options for the non root storage volumes, format: https://pkg.go.dev/sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2#AWSMachineSpec.NonRootVolumes; type: array; item: object
   # --- START CUSTOMIZATION: Do not remove ---
@@ -55,16 +52,17 @@ controlPlane: # @schema description: The configuration of the control plane mach
     httpPutResponseHopLimit: 2
   rootVolumeType: "gp3"
   rootVolumeEncryption: true # @schema description: Sets encryption for the root volume as true by default.
-  amiID: "ami-0f3caa1cf4417e51b" # @schema description: The ID of Amazon Machine Image; type: string
+  rootVolumeSize: 64 # @schema description: Specifies size (in Gi) of the root storage device. Must be greater than the image snapshot size or 8 (whichever is greater); type: integer; minimum: 8
+  imageLookup: # @schema description: AMI lookup parameters; type: object
+    format: "al2023-ami-2023.*-x86_64" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
+    org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
+    baseOS: "" # @schema description: The name of the base operating system to use for image lookup the AMI is not set; type: string
   # --- END CUSTOMIZATION ---
 
 worker: # @schema description: The configuration of the worker machines; type: object
+  amiID: "" # @schema description: The ID of Amazon Machine Image; type: string
   iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io # @schema description: A name of an IAM instance profile to assign to the instance; type: string; required: true
   instanceType: "" # @schema description: The type of instance to create. Example: m4.xlarge; type: string; required: true
-  imageLookup: # @schema description: AMI lookup parameters; type: object
-    format: "al2023-ami-2023.*-x86_64" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
-    org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
-    baseOS: "" # @schema description: The name of the base operating system to use for image lookup the AMI is not set; type: string
   uncompressedUserData: false # @schema description: Specify whether the user data is gzip-compressed before it is sent to ec2 instance. Cloud-init has built-in support for gzip-compressed user data. User data stored in aws secret manager is always gzip-compressed; type: boolean
   nonRootVolumes: [] # @schema title: Non-root storage volumes; description: Configuration options for the non root storage volumes, format: https://pkg.go.dev/sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2#AWSMachineSpec.NonRootVolumes; type: array; item: object
   # --- START CUSTOMIZATION: Do not remove ---
@@ -73,7 +71,11 @@ worker: # @schema description: The configuration of the worker machines; type: o
     httpPutResponseHopLimit: 2
   rootVolumeType: "gp3"
   rootVolumeEncryption: true # @schema description: Sets encryption for the root volume as true by default.
-  amiID: "ami-0f3caa1cf4417e51b" # @schema description: The ID of Amazon Machine Image; type: string
+  rootVolumeSize: 100 # @schema description: Specifies size (in Gi) of the root storage device. Must be greater than the image snapshot size or 8 (whichever is greater); type: integer; minimum: 8
+  imageLookup: # @schema description: AMI lookup parameters; type: object
+    format: "al2023-ami-2023.*-x86_64" # @schema description: The AMI naming format to look up the image for this machine. It will be ignored if an explicit AMI is set; type: string; required: true
+    org: "137112412989" # @schema description: The AWS Organization ID to use for image lookup if AMI is not set; type: string; required: true
+    baseOS: "" # @schema description: The name of the base operating system to use for image lookup the AMI is not set; type: string
   # --- END CUSTOMIZATION ---
 
 # K0s parameters
