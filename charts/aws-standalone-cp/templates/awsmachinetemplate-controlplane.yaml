@@ -26,6 +26,7 @@ spec:
         size: {{ .Values.controlPlane.rootVolumeSize }}
         # --- START CUSTOMIZATION: Do not remove ---
         encrypted: {{ .Values.controlPlane.rootVolumeEncryption }}
+        type: {{ .Values.controlPlane.rootVolumeType }}
         # --- END CUSTOMIZATION ---
       {{- with .Values.controlPlane.nonRootVolumes }}
       nonRootVolumes: {{- toYaml . | nindent 8 }}
