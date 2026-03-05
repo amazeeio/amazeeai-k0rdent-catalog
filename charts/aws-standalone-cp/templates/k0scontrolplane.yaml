@@ -6,6 +6,7 @@ metadata:
   annotations:
     {{- include "aws-standalone.keepPolicy" . | nindent 4 }}
 spec:
+  updateStrategy: {{ .Values.controlPlaneUpdateStrategy }}
   replicas: {{ .Values.controlPlaneNumber }}
   version: {{ .Values.k0s.version }}
   k0sConfigSpec:
