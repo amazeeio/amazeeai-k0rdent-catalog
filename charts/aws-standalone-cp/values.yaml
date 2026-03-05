@@ -97,4 +97,5 @@ k0s: # @schema description: K0s parameters; type: object; additionalProperties: 
 # When true, instructs Helm to leave CAPI infrastructure resources intact during an uninstall.
 # This prevents race conditions and allows the CAPI controllers to cleanly tear down AWS resources.
 keepResources: true
+controlPlaneUpdateStrategy: "Recreate"
 # --- END CUSTOMIZATION ---
