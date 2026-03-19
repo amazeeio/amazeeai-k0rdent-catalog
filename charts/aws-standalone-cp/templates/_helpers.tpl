@@ -10,7 +10,7 @@ Control Plane AWSMachineTemplate Name (Chart Version + CP Values Hash)
     {{- /* Truncate the cluster name to 40 chars to guarantee room for the version and hash */ -}}
     {{- $clusterName := include "cluster.name" . | trunc 40 | trimSuffix "-" -}}
     {{- $version := replace "." "-" .Chart.Version -}}
-    {{- $valuesHash := toYaml .Values.controlPlane.machineSpec | sha256sum | trunc 8 -}}
+    {{- $valuesHash := toYaml .Values.controlPlane | sha256sum | trunc 8 -}}
     {{- printf "%s-cp-mt-%s-%s" $clusterName $version $valuesHash | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 {{/*
@@ -19,7 +19,7 @@ Control Plane AWSMachineTemplate Name (Chart Version + CP Values Hash)
 
 {{/*
 --- START CUSTOMIZATION: Do not remove ---
-Worker AWSMachineTemplate Name (Chart Version + CP Values Hash)
+Worker AWSMachineTemplate Name (Chart Version + Worker Values Hash)
 */}}
 {{- define "awsmachinetemplate.worker.name" -}}
     {{- /* Truncate the cluster name to 40 chars to guarantee room for the version and hash */ -}}
