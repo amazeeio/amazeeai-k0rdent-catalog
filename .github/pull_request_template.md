@@ -1,6 +1,6 @@
-## What does this MR do?
+## What does this PR do?
 
-<!-- Briefly describe what this MR is about -->
+<!-- Briefly describe what this PR is about -->
 
 ## Related issue(s)
 
@@ -13,9 +13,9 @@ Examples:
 - Relates #<issue number> or <issue link>
 -->
 
-## Related MR(s)
+## Related changes
 
-<!-- Please link any other related MRs with this change. -->
+<!-- Please link any other PRs or MRs related to this change. -->
 
 ## Type of changes
 
@@ -40,10 +40,10 @@ Examples:
 - [ ] Review your changes before adding any reviewers.
 - [ ] (If applicable) Documentation is updated (README, Notion etc.)
 - [ ] If you have multiple commits, please combine them into a few logically organized commits by squashing them.
-- [ ] This MR contains substantial use of AI-assisted coding tools.
+- [ ] This PR contains substantial use of AI-assisted coding tools.
 
 ## Status
 
-<!-- Please also mark the MR as Draft if it isn't ready for review. -->
+<!-- Please also mark the PR as Draft if it isn't ready for review. -->
 
 - [ ] Ready for Review
