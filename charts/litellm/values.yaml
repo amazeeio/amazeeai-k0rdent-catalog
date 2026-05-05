@@ -76,8 +76,7 @@ litellm-helm:
       store_prompts_in_spend_logs: false # This should only be true for specific debugging.
   
   startupProbe:
-    timeoutSeconds: 30
-
+    timeoutSeconds: 3
 prometheus:
   # RBAC configuration - required for cross-namespace pod discovery (e.g., envoy-gateway-system)
   rbac:
