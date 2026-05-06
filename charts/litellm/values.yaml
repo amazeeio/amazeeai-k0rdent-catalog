@@ -74,9 +74,15 @@ litellm-helm:
       master_key: os.environ/PROXY_MASTER_KEY
       store_model_in_db: true
       store_prompts_in_spend_logs: false # This should only be true for specific debugging.
-  
+
+  livenessProbe:
+    timeoutSeconds: 3
+  readinessProbe:
+    timeoutSeconds: 3
   startupProbe:
     timeoutSeconds: 3
+    initialDelaySeconds: 5
+  
 prometheus:
   # RBAC configuration - required for cross-namespace pod discovery (e.g., envoy-gateway-system)
   rbac:
