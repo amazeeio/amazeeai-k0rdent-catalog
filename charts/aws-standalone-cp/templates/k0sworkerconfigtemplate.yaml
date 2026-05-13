@@ -7,7 +7,6 @@ metadata:
     {{- include "aws-standalone.keepPolicy" . | nindent 4 }}
 spec:
   template:
-  template:
     spec:
       {{- if $global.k0sURL }}
       downloadURL: "{{ $global.k0sURL }}/k0s-{{ .Values.k0s.version }}-{{ .Values.k0s.arch }}"
