@@ -8,10 +8,10 @@ metadata:
   finalizers:
     - k0rdent.mirantis.com/cleanup
 spec:
-  region: {{ .Values.region }}
+  region: {{ .Values.region | quote }}
   identityRef:
-    kind: {{ .Values.clusterIdentity.kind }}
-    name: {{ .Values.clusterIdentity.name }}
+    kind: {{ .Values.clusterIdentity.kind | quote }}
+    name: {{ .Values.clusterIdentity.name | quote }}
   controlPlaneLoadBalancer:
     healthCheckProtocol: TCP
     # --- START CUSTOMIZATION: Do not remove ---
@@ -33,8 +33,9 @@ spec:
         protocol: tcp
         fromPort: 9443
         toPort: 9443
-  {{- if not (quote .Values.sshKeyName | empty) }}
-  sshKeyName: {{ .Values.sshKeyName | quote }}
+  {{- $sshKeyName := .Values.sshKeyName }}
+  {{- if ne $sshKeyName nil }}
+  sshKeyName: {{ $sshKeyName | quote }}
   {{- end }}
   {{- with .Values.bastion }}
   bastion:
