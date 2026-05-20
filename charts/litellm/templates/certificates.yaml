@@ -12,32 +12,4 @@ spec:
     kind: Issuer
   dnsNames:
   - {{ .Values.host }}
----
-{{- if .Values.grafana.enabled }}
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: grafana-gateway-tls
-  namespace: {{ .Release.Namespace }}
-spec:
-  secretName: grafana-gateway-tls
-  issuerRef:
-    name: letsencrypt-prod
-    kind: Issuer
-  dnsNames:
-  - {{ .Values.gateway.grafanaHost }}
-{{- end }}
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: prometheus-gateway-tls
-  namespace: {{ .Release.Namespace }}
-spec:
-  secretName: prometheus-gateway-tls
-  issuerRef:
-    name: letsencrypt-prod
-    kind: Issuer
-  dnsNames:
-  - {{ .Values.gateway.prometheusHost }}
 {{- end }}
