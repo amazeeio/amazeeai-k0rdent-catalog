@@ -68,6 +68,7 @@ litellm-helm:
 
     litellm_settings:
       drop_params: true
+      callbacks: ["prometheus"]
 
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
