@@ -1,5 +1,9 @@
 host: litellm.example.com
 
+ingress:
+  annotations:
+    monitoring.amazee.io/uptime: "true"
+
 # Gateway API configuration (alternative to Ingress)
 gateway:
   enabled: false # Default is still ingress
