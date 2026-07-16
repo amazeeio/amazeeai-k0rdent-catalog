@@ -28,7 +28,7 @@ spec:
     # DEPRECATED: The `k0s.auth` field is deprecated.
     # Use the `ClusterAuthentication` resource to configure authentication instead.
     {{- $auth := .Values.k0s.auth }}
-    {{- if or (and $auth $auth.enabled) $files $global.registryCertSecret $global.k0sURLCertSecret .Values.auth.configSecret.name }}
+    {{- if or (and $auth $auth.enabled) $files $global.registryCertSecret $global.k0sURLCertSecret .Values.auth.configSecret.name .Values.encryption.configSecret.name .Values.audit.policyRef.name }}
     {{- if and $auth $auth.enabled }}
     - content: | {{ toYaml $auth.config | nindent 8 }}
       permissions: "0644"
@@ -40,6 +40,22 @@ spec:
           key: {{ default "config" .Values.auth.configSecret.key  | quote }}
       permissions: "0644"
       path: {{ include "authentication-config.fullpath" . }}
+    {{- end }}
+    {{- if .Values.encryption.configSecret.name }}
+    - contentFrom:
+        secretRef:
+          name: {{ .Values.encryption.configSecret.name  | quote }}
+          key: {{ default "config" .Values.encryption.configSecret.key  | quote }}
+      permissions: "0644"
+      path: {{ include "encryption-config.fullpath" . }}
+    {{- end }}
+    {{- if .Values.audit.policyRef.name }}
+    - contentFrom:
+        configMapRef:
+          name: {{ .Values.audit.policyRef.name  | quote }}
+          key: {{ default "policy" .Values.audit.policyRef.key  | quote }}
+      permissions: "0644"
+      path: {{ include "audit-policy.fullpath" . }}
     {{- end }}
     {{- range $file := $files }}
     - {{ toYaml $file | trim | nindent 6 }}
@@ -94,7 +110,7 @@ spec:
           {{- else }}
           chartName: aws-cloud-controller-manager/aws-cloud-controller-manager
           {{- end }}
-          version: 0.0.9
+          version: 0.0.11
           releaseName: aws-cloud-controller-manager
           namespace: kube-system
           values: |
@@ -104,7 +120,7 @@ spec:
               {{- if $global.registry }}
               repository: {{ $global.registry }}/provider-aws/cloud-controller-manager
               {{- end }}
-              tag: v1.30.3
+              tag: v1.34.0
             args:
               - --v=2
               - --cloud-provider=aws
@@ -135,7 +151,7 @@ spec:
           {{- else }}
           chartName: aws-ebs-csi-driver/aws-ebs-csi-driver
           {{- end }}
-          version: 2.33.0
+          version: 2.58.0
           releaseName: aws-ebs-csi-driver
           namespace: kube-system
           values: |
@@ -145,22 +161,22 @@ spec:
             sidecars:
               provisioner:
                 image:
-                  repository: {{ $global.registry }}/kubernetes-csi/external-provisioner
+                  repository: {{ $global.registry }}/csi-components/csi-provisioner
               attacher:
                 image:
-                  repository: {{ $global.registry }}/kubernetes-csi/external-attacher
+                  repository: {{ $global.registry }}/csi-components/csi-attacher
               snapshotter:
                 image:
-                  repository: {{ $global.registry }}/external-snapshotter/csi-snapshotter
+                  repository: {{ $global.registry }}/csi-components/csi-snapshotter
               livenessProbe:
                 image:
-                  repository: {{ $global.registry }}/kubernetes-csi/livenessprobe
+                  repository: {{ $global.registry }}/csi-components/livenessprobe
               resizer:
                 image:
-                  repository: {{ $global.registry }}/kubernetes-csi/external-resizer
+                  repository: {{ $global.registry }}/csi-components/csi-resizer
               nodeDriverRegistrar:
                 image:
-                  repository: {{ $global.registry }}/kubernetes-csi/node-driver-registrar
+                  repository: {{ $global.registry }}/csi-components/csi-node-driver-registrar
               volumemodifier:
                 image:
                   repository: {{ $global.registry }}/ebs-csi-driver/volume-modifier-for-k8s
@@ -172,6 +188,13 @@ spec:
     {{- if or $global.registryCertSecret $global.k0sURLCertSecret }}
     preStartCommands:
     - "sudo update-ca-certificates"
+    {{- end }}
+        {{- if and .Values.audit.policyRef.name .Values.audit.logPath (ne .Values.audit.logPath "-") }}
+    {{- $logPath := .Values.audit.logPath }}
+    {{- $logDir := dir $logPath }}
+    postStartCommands:
+    - 'sudo mkdir -p {{ $logDir }}'
+    - 'sudo chown kube-apiserver:kube-apiserver {{ $logDir }}'
     {{- end }}
     k0s:
       apiVersion: k0s.k0sproject.io/v1beta1
@@ -190,6 +213,29 @@ spec:
             authentication-config: "/etc/k0s/auth/auth-config.yaml"
             {{- else if .Values.auth.configSecret.name }}
             authentication-config: {{ include "authentication-config.fullpath" . }}
+            {{- end }}
+            {{- if .Values.encryption.configSecret.name }}
+            encryption-provider-config: {{ include "encryption-config.fullpath" . }}
+            {{- if .Values.encryption.automaticReload }}
+            encryption-provider-config-automatic-reload: "true"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.audit.policyRef.name }}
+            audit-policy-file: {{ include "audit-policy.fullpath" . }}
+            {{- with .Values.audit.logPath }}
+            audit-log-path: {{ . | quote }}
+            {{- end }}
+            {{- if and .Values.audit.logPath (ne .Values.audit.logPath "-") }}
+            {{- with .Values.audit.logMaxAge }}
+            audit-log-maxage: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.audit.logMaxBackup }}
+            audit-log-maxbackup: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.audit.logMaxSize }}
+            audit-log-maxsize: {{ . | quote }}
+            {{- end }}
+            {{- end }}
             {{- end }}
           {{- with .Values.k0s.api.extraArgs }}
             {{- toYaml . | nindent 12 }}
