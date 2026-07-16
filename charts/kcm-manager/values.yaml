@@ -1,16 +1,16 @@
-k0rdentVersion: "1.9.0"
+k0rdentVersion: "1.10.0"
 
-managementVersion: "1.9.0"
+managementVersion: "1.10.0"
 
-capiTemplate: "cluster-api-1-1-9"
+capiTemplate: "cluster-api-1-1-13"
 
 providers:
   - name: cluster-api-provider-k0sproject-k0smotron
-    template: cluster-api-provider-k0sproject-k0smotron-1-0-24
+    template: cluster-api-provider-k0sproject-k0smotron-1-0-26
   - name: cluster-api-provider-aws
-    template: cluster-api-provider-aws-1-0-20
+    template: cluster-api-provider-aws-1-0-22
   - name: projectsveltos
-    template: projectsveltos-1-8-0
+    template: projectsveltos-1-9-0
 
 kcmValues:
   admissionWebhook:
