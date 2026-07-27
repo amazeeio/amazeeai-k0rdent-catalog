@@ -18,7 +18,15 @@ externalSecrets:
 litellm-helm:
   enabled: true
   image:
-    tag: "main-stable"
+    # Upstream LiteLLM plus our pending upstream patches (currently
+    # BerriAI/litellm#31618), republished by
+    # https://github.com/amazeeio/litellm-lagoon-base. Tags track upstream
+    # stable releases. The package is internal, so the pulling cluster needs
+    # a ghcr.io dockerconfigjson secret referenced via imagePullSecrets.
+    repository: ghcr.io/amazeeio/litellm-lagoon-base-database
+    tag: "v1.93.0"
+  # imagePullSecrets:
+  #   - name: ghcr-pull-secret
   .aws_api_key: &aws-api-key
     aws_access_key_id: os.environ/AWS_ACCESS_KEY_ID
     aws_secret_access_key: os.environ/AWS_SECRET_ACCESS_KEY
