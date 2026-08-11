@@ -44,7 +44,21 @@ litellm-helm:
   #     UI_USERNAME: admin
   #     UI_PASSWORD: fillme
 
+  # The upstream migrations job is replaced by templates/migrations-job.yaml:
+  # its entrypoint (litellm/proxy/prisma_migration.py) is pinned to the v1
+  # migration resolver, whose diff-and-force recovery can drop and recreate
+  # tables during rolling deploys (this wiped LiteLLM_ProxyModelTable on
+  # amazeeai-us1). Our job runs the same setup with the v2 resolver. Setting
+  # this back to true restores the upstream job and disables ours.
+  migrationJob:
+    enabled: false
+
   proxy_config:
+    # Upstream ships two demo models (gpt-3.5-turbo, fake-openai-endpoint)
+    # as its default model_list, which leaks into every cluster that does not
+    # define its own. Models come from the amazee.ai model catalog (or an
+    # explicit model_list in the cluster file), never from chart defaults.
+    model_list: []
 
     litellm_settings:
       drop_params: true

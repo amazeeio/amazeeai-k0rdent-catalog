@@ -1,0 +1,62 @@
+{{- $llm := index .Values "litellm-helm" }}
+{{- if and $llm.enabled (not ($llm.migrationJob).enabled) }}
+# Replacement for the upstream litellm-helm migrations job. Upstream's
+# entrypoint (python litellm/proxy/prisma_migration.py) is hard-wired to the
+# v1 migration resolver, whose diff-and-force recovery can drop and recreate
+# tables during rolling deploys — this wiped LiteLLM_ProxyModelTable on
+# amazeeai-us1. `litellm --skip_server_startup` runs the exact same database
+# setup, and --use_v2_migration_resolver opts into the safe resolver (LiteLLM's
+# own recommendation for this failure mode). Renders only while the upstream
+# job is disabled (litellm-helm.migrationJob.enabled=false), so re-enabling
+# upstream never yields two competing jobs.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-litellm-migrations-v2
+  annotations:
+    helm.sh/hook: "pre-install,pre-upgrade"
+    helm.sh/hook-delete-policy: "before-hook-creation"
+    helm.sh/hook-weight: "1"
+    checksum/config: {{ toYaml $llm | sha256sum }}
+spec:
+  backoffLimit: 4
+  # Keep finished pods for a day: upstream's 120s TTL deleted the pod (and its
+  # logs) before anyone could diagnose a destructive migration run.
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: prisma-migrations
+          image: "{{ ($llm.image).repository | default "ghcr.io/berriai/litellm-database" }}:{{ ($llm.image).tag | default "main-stable" }}"
+          command: ["litellm", "--skip_server_startup", "--use_v2_migration_resolver"]
+          workingDir: "/app"
+          env:
+            # ponytail: only the db.useExisting layout our clusters use; add the
+            # deployStandalone branch from upstream's template if ever needed.
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $llm.db.secret.name }}
+                  key: {{ $llm.db.secret.usernameKey }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $llm.db.secret.name }}
+                  key: {{ $llm.db.secret.passwordKey }}
+            - name: DATABASE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $llm.db.secret.name }}
+                  key: {{ $llm.db.secret.endpointKey }}
+            - name: DATABASE_NAME
+              value: {{ $llm.db.database }}
+            - name: DATABASE_URL
+              value: {{ $llm.db.url | quote }}
+            {{- range $key, $val := $llm.envVars }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            - name: DISABLE_SCHEMA_UPDATE
+              value: "false" # this job IS the schema update; proxy pods keep it disabled
+{{- end }}
