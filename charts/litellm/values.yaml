@@ -44,15 +44,22 @@ litellm-helm:
   #     UI_USERNAME: admin
   #     UI_PASSWORD: fillme
 
+  envVars:
+    LITELLM_MODE: "PRODUCTION" # disables load_dotenv; all instances are consumers of LiteLLM
+    LITELLM_LOG: "ERROR" # error-level logging only
+
   proxy_config:
 
     litellm_settings:
       drop_params: true
+      request_timeout: 600 # fail requests after 10 min instead of litellm's 100 min default (ingress cuts at 660s anyway)
 
     general_settings:
       master_key: os.environ/PROXY_MASTER_KEY
       store_model_in_db: true
       store_prompts_in_spend_logs: false # This should only be true for specific debugging.
+      proxy_batch_write_at: 60 # batch spend/db writes every 60s instead of per-request
+      database_connection_pool_limit: 10 # cap prisma pool per pod
 
   livenessProbe:
     timeoutSeconds: 3
