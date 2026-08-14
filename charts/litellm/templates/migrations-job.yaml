@@ -1,20 +1,26 @@
 {{- $llm := index .Values "litellm-helm" }}
 {{- if and $llm.enabled (not ($llm.migrationJob).enabled) }}
-# Replacement for the upstream litellm-helm migrations job. Upstream's
-# entrypoint (python litellm/proxy/prisma_migration.py) is hard-wired to the
-# v1 migration resolver, whose diff-and-force recovery can drop and recreate
-# tables during rolling deploys — this wiped LiteLLM_ProxyModelTable on
-# amazeeai-us1. `litellm --skip_server_startup` runs the exact same database
-# setup, and --use_v2_migration_resolver opts into the safe resolver (LiteLLM's
-# own recommendation for this failure mode). Renders only while the upstream
-# job is disabled (litellm-helm.migrationJob.enabled=false), so re-enabling
-# upstream never yields two competing jobs.
+# Replacement for the upstream litellm-helm migrations job. Upstream's job is
+# hard-wired to the v1 migration resolver (python litellm/proxy/prisma_migration.py)
+# and carries only ArgoCD hook annotations, which are inert under plain Helm —
+# on our clusters it ran once at first install and never again (completed Jobs
+# are immutable). The destructive v1 runs that wiped LiteLLM_ProxyModelTable on
+# amazeeai-us1 came from proxy pods migrating at startup; those now use the v2
+# resolver via `args` in values.yaml. This job runs the same database setup
+# (`litellm --skip_server_startup --use_v2_migration_resolver`) as a
+# pre-upgrade hook so migrations complete BEFORE pods roll, and keeps its logs
+# for a day. pre-install is deliberately omitted: the DB secret comes from this
+# chart's own ExternalSecret, which cannot exist while a pre-install hook
+# blocks the first install — on first install the proxy pods create the schema
+# themselves (v2, via args). Renders only while the upstream job is disabled
+# (litellm-helm.migrationJob.enabled=false), so re-enabling upstream never
+# yields two competing jobs.
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Release.Name }}-litellm-migrations-v2
   annotations:
-    helm.sh/hook: "pre-install,pre-upgrade"
+    helm.sh/hook: "pre-upgrade"
     helm.sh/hook-delete-policy: "before-hook-creation"
     helm.sh/hook-weight: "1"
     checksum/config: {{ toYaml $llm | sha256sum }}
@@ -58,5 +64,5 @@ spec:
               value: {{ $val | quote }}
             {{- end }}
             - name: DISABLE_SCHEMA_UPDATE
-              value: "false" # this job IS the schema update; proxy pods keep it disabled
+              value: "false" # this job IS the schema update; last entry wins if a cluster sets it in envVars
 {{- end }}
