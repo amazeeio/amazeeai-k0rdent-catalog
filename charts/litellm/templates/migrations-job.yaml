@@ -38,7 +38,7 @@ spec:
           command: ["litellm", "--skip_server_startup", "--use_v2_migration_resolver"]
           workingDir: "/app"
           env:
-            # ponytail: only the db.useExisting layout our clusters use; add the
+            # Only the db.useExisting layout our clusters use; add the
             # deployStandalone branch from upstream's template if ever needed.
             - name: DATABASE_USERNAME
               valueFrom:
