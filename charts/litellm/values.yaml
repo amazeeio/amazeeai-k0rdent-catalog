@@ -44,6 +44,20 @@ litellm-helm:
   #     UI_USERNAME: admin
   #     UI_PASSWORD: fillme
 
+  # Proxy pods run the database migration setup on every startup (the chart's
+  # deployment sets no DISABLE_SCHEMA_UPDATE, and none of our values disable
+  # it), and litellm defaults to the v1 migration resolver, whose
+  # diff-and-force recovery can drop and recreate tables when pods contend
+  # during rolling deploys or restarts — this is what wiped
+  # LiteLLM_ProxyModelTable on amazeeai-us1. The flag opts every pod into the
+  # v2 resolver, which never takes the destructive path. These are the chart's
+  # default args plus the flag; if numWorkers is ever set it must be re-added
+  # here, since an explicit `args` replaces the chart's default arg list.
+  args:
+    - --config
+    - /etc/litellm/config.yaml
+    - --use_v2_migration_resolver
+
   proxy_config:
 
     litellm_settings:
