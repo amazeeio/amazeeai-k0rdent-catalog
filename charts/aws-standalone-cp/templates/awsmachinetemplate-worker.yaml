@@ -1,9 +1,12 @@
+{{- if gt (int .Values.workersNumber) 0 }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: AWSMachineTemplate
 metadata:
   name: {{ include "awsmachinetemplate.worker.name" . }}
+  # --- START CUSTOMIZATION: Do not remove ---
   annotations:
     {{- include "aws-standalone.keepPolicy" . | nindent 4 }}
+  # --- END CUSTOMIZATION ---
 spec:
   template:
     spec:
@@ -39,3 +42,4 @@ spec:
         httpTokens: {{ .Values.worker.instanceMetadataOptions.httpTokens }}
         httpPutResponseHopLimit: {{ .Values.worker.instanceMetadataOptions.httpPutResponseHopLimit }}
       # --- END CUSTOMIZATION ---
+{{- end }}
