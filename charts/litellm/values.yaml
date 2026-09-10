@@ -45,6 +45,11 @@ litellm-helm:
   #     UI_PASSWORD: fillme
 
   proxy_config:
+    # Upstream ships two demo models (gpt-3.5-turbo, fake-openai-endpoint)
+    # as its default model_list, which leaks into every cluster that does not
+    # define its own. Models come from the amazee.ai model catalog (or an
+    # explicit model_list in the cluster file), never from chart defaults.
+    model_list: []
 
     litellm_settings:
       drop_params: true
