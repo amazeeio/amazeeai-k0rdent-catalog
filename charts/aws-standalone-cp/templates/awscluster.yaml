@@ -4,7 +4,9 @@ metadata:
   name: {{ include "cluster.name" . }}
   annotations:
     aws.cluster.x-k8s.io/external-resource-gc: "true"
+    # --- START CUSTOMIZATION: Do not remove ---
     {{- include "aws-standalone.keepPolicy" . | nindent 4 }}
+    # --- END CUSTOMIZATION ---
   finalizers:
     - k0rdent.mirantis.com/cleanup
 spec:
