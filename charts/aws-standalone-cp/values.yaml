@@ -1,6 +1,6 @@
 # Cluster parameters
 controlPlaneNumber: 3 # @schema description: The number of the control-plane machines; minimum: 1; type: integer; required: true
-workersNumber: 2 # @schema description: The number of the worker machines; minimum: 1; type: integer; required: true
+workersNumber: 2 # @schema description: The number of the worker machines. Set to 0 to skip provisioning a dedicated worker MachineDeployment and run workloads on the control-plane nodes; minimum: 0; type: integer; required: true
 
 clusterNetwork: # @schema description: The cluster network configuration; type: object
   pods: # @schema description: The network ranges from which Pod networks are allocated; type: object
@@ -98,7 +98,7 @@ worker: # @schema description: The configuration of the worker machines; type: o
 # K0s parameters
 # # NOTE: .k0s additional properties are to support prior .k0s.auth implementation
 k0s: # @schema description: K0s parameters; type: object; additionalProperties: true
-  version: v1.35.2+k0s.0 # @schema description: K0s version; type: string; required: true
+  version: v1.36.2+k0s.0 # @schema description: K0s version; type: string; required: true
   arch: amd64 # @schema description: K0s Download URL Arch; type: string; enum: amd64, arm64, arm; default: amd64
   cpArgs: [] # @schema description: Args specifies extra arguments to be passed to k0s controller. See: https://docs.k0sproject.io/stable/cli/k0s_controller/; type: array; item: string; uniqueItems: true
   workerArgs: [] # @schema description: Args specifies extra arguments to be passed to k0s worker. See: https://docs.k0sproject.io/stable/worker-node-config/ See: https://docs.k0sproject.io/stable/cli/k0s_worker/; type: array; item: string; uniqueItems: true
