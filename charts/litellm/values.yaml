@@ -1,5 +1,7 @@
 host: litellm.example.com
 
+defaultIngressClass: nginx
+
 ingress:
   annotations:
     monitoring.amazee.io/uptime: "true"
@@ -45,7 +47,6 @@ litellm-helm:
   #     UI_PASSWORD: fillme
 
   proxy_config:
-
     litellm_settings:
       drop_params: true
 
