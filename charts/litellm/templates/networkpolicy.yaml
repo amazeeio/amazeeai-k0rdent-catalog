@@ -1,0 +1,18 @@
+# Block pod egress to the EC2 instance metadata service (IMDS).
+# LiteLLM uses static AWS keys, so nothing in this namespace needs IMDS.
+# Workers run with httpPutResponseHopLimit: 2 and the control-plane instance
+# profile, so without this an SSRF in LiteLLM could reach node credentials.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-imds
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 169.254.169.254/32
